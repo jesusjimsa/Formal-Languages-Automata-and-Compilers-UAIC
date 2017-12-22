@@ -1,0 +1,7 @@
+Nr. 1:	write in a file all the words that contain at least 3 instances of "rxe", the remaining substrings have odd and are surrounded by {< >} 
+		print on screen all numbers that are divisible by 2 and 5 and have a length equal to the value of the first digit
+		
+Nr. 2:	write in a file all the words made up of lowercase letters, contain a substring of length 2k+1 b, k >= 0, a substring of length 2n a, n >= 0, and are surrounded by /* */
+		print on screen all the numbers that begin with 1, 3 or 7 and end with a sequence of length 3m, m >= 0, even digits
+		
+All the languages must be defined using regular expressions. Both solutions must be in the same lex file.
