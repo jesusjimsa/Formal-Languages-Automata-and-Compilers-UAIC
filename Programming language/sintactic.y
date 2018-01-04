@@ -1,7 +1,7 @@
 %{
-    void yerror(char *s);
-    #include <stdio.h>
-    #include <stdlib.h>
+	void yerror(char *s);
+	#include <stdio.h>
+	#include <stdlib.h>
 
 %}
 
@@ -31,6 +31,7 @@
 %token S_MAIN
 %token NUM
 %token ID
+%token STRING
 
 %start START
 
@@ -51,7 +52,7 @@ ST1: ST_IF
 	| ST_WHILE
 	| ST_FOR
 	| ACT_CS
-    ;
+	;
 
 CONDITION: ID_NUM CS_EQUAL ID_NUM
 	| ID_NUM CS_GREATER ID_NUM
@@ -64,6 +65,10 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM
 	;
 
 ACT_CS: ID_NUM OPERATION ID_NUM;
+
+PRINTING: S_PRINT ID	{printf("Printing %s\n", $2);}
+	| S_PRINT NUM		{printf("Printing %d\n", $2);}
+	;
 
 ID_NUM: ID
 	| NUM
