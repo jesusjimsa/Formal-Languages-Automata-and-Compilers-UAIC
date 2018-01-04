@@ -1,6 +1,7 @@
 %{
 	#include <stdio.h>
 	#include <stdlib.h>
+	#include <string.h>
 %}
 
 NUMBER [0-9]+
@@ -16,6 +17,7 @@ LETTER [a-zA-Z]+
 "!="		{return CS_DIFFERENT}
 "not"|"NOT"	{return CS_NOT;}
 "="			{return EQUAL;}
+"+"			{return ADD;}
 "("			{return O_BRACKETS;}
 ")"			{return C_BRACKETS;}
 "{"			{return O_CURLY;}
@@ -34,7 +36,8 @@ LETTER [a-zA-Z]+
 
 "exit"|"quit"|"bye"	{printf("Closing program\n"); exit(0);}
 
-{NUMBER}	{return NUM;}
-{LETTER}	{return ID;}
+{NUMBER}			{return NUM;}
+{LETTER}			{return ID;}
+"\""{LETTER}"\""	{return STRING}
 
 %%
