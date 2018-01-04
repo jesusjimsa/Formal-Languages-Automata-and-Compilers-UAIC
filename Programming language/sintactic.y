@@ -66,11 +66,10 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM
 
 ACT_CS: ID_NUM OPERATION ID_NUM;
 
-PRINTING: S_PRINT ID	{printf("Printing %s\n", $2);}
-	| S_PRINT NUM		{printf("Printing %d\n", $2);}
+PRINTING: S_PRINT STRING	{printf("Printing %s\n", $2);}
+	| S_PRINT NUM			{printf("Printing %d\n", $2);}
 	;
 
 ID_NUM: ID
 	| NUM
-	;
 %%
