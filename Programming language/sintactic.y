@@ -2,7 +2,7 @@
 	void yerror(char *s);
 	#include <stdio.h>
 	#include <stdlib.h>
-
+	#include <string.h>
 %}
 
 // Characters
@@ -12,6 +12,7 @@
 %token SQUOT
 %token EQUAL
 %token SEMICOLON
+%token ADD
 
 // Control statements
 %token CS_IF
@@ -54,20 +55,24 @@ ST1: ST_IF
 	| ACT_CS
 	;
 
-CONDITION: ID_NUM CS_EQUAL ID_NUM
-	| ID_NUM CS_GREATER ID_NUM
-	| ID_NUM CS_LESS ID_NUM
-	| ID_NUM CS_DIFFERENT ID_NUM
-	| CONDITION CS_AND CONDITION
-	| CONDITION CS_OR CONDITION
-	| CS_NOT CONDITION
-	| ID_NUM
+CONDITION: ID_NUM CS_EQUAL ID_NUM	{$1 == $3;}
+	| ID_NUM CS_GREATER ID_NUM		{$1 > $3}
+	| ID_NUM CS_LESS ID_NUM			{$1 < $3}
+	| ID_NUM CS_DIFFERENT ID_NUM	{$1 != $3}
+	| CONDITION CS_AND CONDITION	{$1 && $3}
+	| CONDITION CS_OR CONDITION		{$1 || $3}
+	| CS_NOT CONDITION				{!$1}
+	| ID_NUM						{$1}
 	;
 
 ACT_CS: ID_NUM OPERATION ID_NUM;
 
 PRINTING: S_PRINT STRING	{printf("Printing %s\n", $2);}
 	| S_PRINT NUM			{printf("Printing %d\n", $2);}
+	;
+
+STRING_OP: ID EQUAL STRING			{$1 = $3}
+	| ID EQUAL STRING ADD STRING	{$1 = $3; strcat($1, $5);}
 	;
 
 ID_NUM: ID
