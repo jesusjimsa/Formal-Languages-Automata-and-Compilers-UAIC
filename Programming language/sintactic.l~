@@ -45,6 +45,7 @@ LETTER [a-zA-Z]+
 "principal"	{return S_PRINCIPAL;}
 "const"		{return S_CONSTANT;}
 "arguments"	{return S_ARGUMENTS;}
+"main"		{return S_MAIN;}
 "if"		{return CS_IF;}
 "then"		{return CS_THEN;}
 "else"		{return CS_ELSE;}
@@ -54,7 +55,7 @@ LETTER [a-zA-Z]+
 "print"		{return S_PRINT;}
 "DEFINE"	{return W_DEFINE;}
 
-
+"+="|"-="|"*="|"=¬"										{return S_ASSIGNMENT;}
 "True"|"False"|{SBINARY}	 {return BINARY;}
 "stdio.h"|"iostream"|"math"|"string.h"					{return LIBRARIES;}
 
