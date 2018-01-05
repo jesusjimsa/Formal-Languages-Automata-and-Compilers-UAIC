@@ -217,4 +217,7 @@ xcuserdata/
 !*.xcworkspace/contents.xcworkspacedata
 /*.gcno
 
+## Added by me ##
+RODRI analizador_sintactico.*
+
 # End of https://www.gitignore.io/api/c,c++,flex,xcode,macos,visualstudiocode
