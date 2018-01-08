@@ -20,7 +20,7 @@ LETTER [a-zA-Z]+
 "!="		{return CS_DIFFERENT}
 "not"|"NOT"	{return CS_NOT;}
 "="			{return S_EQUAL;}
-"+"			{return ADD;}
+"+"			{return S_ADD;}
 "-"			{return S_SUB;}
 "/"			{return S_DIV;}
 "%"			{return S_MOD;}
