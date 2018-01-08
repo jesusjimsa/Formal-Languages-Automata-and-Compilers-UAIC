@@ -4,8 +4,9 @@
 	#include <stdlib.h>
 	#include <string.h>
 
-	const int MAX_NUM_VARS = 1024;
-	char vars[MAX_NUM_VARS][256];
+	const int MAX_NUM_VARS_FUNCS = 1024;
+	char vars[MAX_NUM_VARS_FUNCS][256];		// 256 is the maximun lenght of a variable name
+	char funcs[MAX_NUM_VARS_FUNCS][1024];	// 1024 is the maximun lenght of a function signature
 %}
 
 // Characters
@@ -70,6 +71,7 @@ FUNCION_PRINCIPAL: S_PRINCIPAL O_CURLY EXPRESIONS C_CURLY
 	| S_PRINCIPAL O_BRACKETS S_ARGUMENTS C_BRACKETS O_CURLY EXPRESIONS C_CURLY 
 	;
 
+///////////////////////////////////////////////////////////////////////////////////////////// Checking functions signature
 FUNCION: S_DEFFUNCTION  ID O_BRACKETS C_BRACKETS O_CURLY EXPRESIONS C_CURLY
 	| S_DEFFUNCTION ID O_BRACKETS PARAMETERS C_BRACKETS O_CURLY EXPRESIONS C_CURLY
 	;
@@ -227,21 +229,37 @@ ID_NUM: ID
 void checkVariable(char *name){
 	int already_declared = 0;
 
-	for(int i = 0; i < MAX_NUM_VARS; i++){
+	for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
 		if(!strcmp(&name, &vars[i])){	// This means they have the same name
 			perror("This variable was already declared\n");
 		}
 
 		if(!strcmp('#', &vars[i])){
 			vars[i] = &name;
-			i = MAX_NUM_VARS + 10;	// We don't need more iterations
+			i = MAX_NUM_VARS_FUNCS + 10;	// We don't need more iterations
+		}
+	}
+}
+
+void checkFunctionSignature(char *name){
+	int already_declared = 0;
+
+	for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
+		if(!strcmp(&name, &funcs[i])){	// This means they have the same name
+			perror("This function was already declared\n");
+		}
+
+		if(!strcmp('#', &funcs[i])){
+			funcs[i] = &name;
+			i = MAX_NUM_VARS_FUNCS + 10;	// We don't need more iterations
 		}
 	}
 }
 
 int main(){
-	for(int i = 0; i < MAX_NUM_VARS; i++){
+	for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
 		vars[i] = '#';
+		funcs[i] = '#'
 	}
 
 	yyparse();
