@@ -3,6 +3,9 @@
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>
+
+	const int MAX_NUM_VARS = 1024;
+	char vars[MAX_NUM_VARS][256];
 %}
 
 // Characters
@@ -16,7 +19,7 @@
 %token S_DIV
 %token S_MOD
 %token SEMICOLON S_COMMA
-%token ADD
+%token S_ADD
 %token S_ASTERISK
 %token S_INCREMENTO	S_DECREMENTO
 %token OPERATION
@@ -83,13 +86,13 @@ DECLARATION_VARIABLES:VARIABLE
 	| VARIABLE DECLARATION_VARIABLES
 	;
 
-VARIABLE: VAR_TYPE ID S_EQUAL S_DEFINITION
-	| VAR_TYPE ID
-	| VAR_TYPE ID S_COMMA VARIABLE
-	| VAR_TYPE ID S_EQUAL S_DEFINITION S_COMMA VARIABLE
-	| VAR_TYPE ID S_EQUAL S_DEFINITION
-	| VAR_TYPE ID O_SQUAREB NUM C_SQUAREB
-	| VAR_TYPE ID O_SQUAREB C_SQUAREB
+VARIABLE: VAR_TYPE ID S_EQUAL S_DEFINITION					{checkVariable($2);}
+	| VAR_TYPE ID											{checkVariable($2);}
+	| VAR_TYPE ID S_COMMA VARIABLE							{checkVariable($2);}
+	| VAR_TYPE ID S_EQUAL S_DEFINITION S_COMMA VARIABLE		{checkVariable($2);}
+	| VAR_TYPE ID S_EQUAL S_DEFINITION						{checkVariable($2);}
+	| VAR_TYPE ID O_SQUAREB NUM C_SQUAREB					{checkVariable($2);}
+	| VAR_TYPE ID O_SQUAREB C_SQUAREB						{checkVariable($2);}
 	;
 
 VAR_TYPE: S_INTEGER
@@ -132,10 +135,10 @@ OPERATIONS: ID S_EQUAL S_DEFINITION
 	| ST_MODULE
 	| OP_BINARY
 	;
-ST_PLUS: ID S_EQUAL ID ADD ID	{$1 = $2 + $3}
-	| ID S_EQUAL ID ADD NUM		{$1 = $2 + $3}
-	| ID S_EQUAL NUM ADD ID		{$1 = $2 + $3}
-	| ID S_EQUAL NUM ADD NUM	{$1 = $2 + $3}
+ST_PLUS: ID S_EQUAL ID S_ADD ID		{$1 = $2 + $3}
+	| ID S_EQUAL ID S_ADD NUM		{$1 = $2 + $3}
+	| ID S_EQUAL NUM S_ADD ID		{$1 = $2 + $3}
+	| ID S_EQUAL NUM S_ADD NUM		{$1 = $2 + $3}
 	;
 ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{$1 = $2 - $3}
 	| ID S_EQUAL ID S_SUB NUM			{$1 = $2 - $3}
@@ -190,7 +193,7 @@ ST_FOR: CS_FOR O_BRACKETS ID S_EQUAL NUM SEMICOLON CONDITION SEMICOLON ID S_INCR
 ST1: ST_IF
 	| ST_WHILE
 	| ST_FOR
-	| ACT_CS
+	| OPERATIONS
 	;
 
 CONDITION: ID_NUM CS_EQUAL ID_NUM	{$1 == $3;}
@@ -203,14 +206,12 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{$1 == $3;}
 	| ID_NUM						{$1}
 	;
 
-ACT_CS: ID_NUM OPERATION ID_NUM;
-
 PRINTING: S_PRINT STRING	{printf("Printing %s\n", $2);}
 	| S_PRINT NUM			{printf("Printing %d\n", $2);}
 	;
 
-STRING_OP: ID S_EQUAL STRING		{$1 = $3}
-	| ID S_EQUAL STRING ADD STRING	{$1 = $3; strcat($1, $5);}
+STRING_OP: ID S_EQUAL STRING			{$1 = $3}
+	| ID S_EQUAL STRING S_ADD STRING	{$1 = $3; strcat($1, $5);}
 	;
 
 USER_DEF: S_STRUCT ID O_CURLY DATA C_CURLY;
@@ -222,3 +223,26 @@ DATA: VARIABLE SEMICOLON DATA
 ID_NUM: ID
 	| NUM
 %%
+
+void checkVariable(char *name){
+	int already_declared = 0;
+
+	for(int i = 0; i < MAX_NUM_VARS; i++){
+		if(!strcmp(&name, &vars[i])){	// This means they have the same name
+			perror("This variable was already declared\n");
+		}
+
+		if(!strcmp('#', &vars[i])){
+			vars[i] = &name;
+			i = MAX_NUM_VARS + 10;	// We don't need more iterations
+		}
+	}
+}
+
+int main(){
+	for(int i = 0; i < MAX_NUM_VARS; i++){
+		vars[i] = '#';
+	}
+
+	yyparse();
+}
