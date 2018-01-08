@@ -6,7 +6,7 @@
 %}
 
 NUMBER [0-9]+
-SBINARY[0-1]+
+SBINARY [0-1]+
 LETTER [a-zA-Z]+
 
 %%
@@ -55,10 +55,8 @@ LETTER [a-zA-Z]+
 "DEFINE"	{return W_DEFINE;}
 
 
-"True"|"False"|{SBINARY}	 {return BINARY;}
-"stdio.h"|"iostream"|"math"|"string.h"					{return LIBRARIES;}
-
-
+"True"|"False"|{SBINARY}	 			{return BINARY;}
+"stdio.h"|"iostream"|"math"|"string.h"	{return LIBRARIES;}
 
 "exit"|"quit"|"bye"	{printf("Closing program\n"); exit(0);}
 
