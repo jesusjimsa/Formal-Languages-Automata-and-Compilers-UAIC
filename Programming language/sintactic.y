@@ -36,6 +36,7 @@
 %token S_DEFFUNCTION
 %token S_PRINCIPAL
 %token S_ARGUMENTS
+
 // Control statements
 %token CS_IF
 %token CS_THEN
@@ -59,7 +60,6 @@
 %start START
 
 %%
-
 BEGIN: FUNCIONES;
 
 FUNCIONES: FUNCION_PRINCIPAL
@@ -92,22 +92,31 @@ DECLARATION_VARIABLES:VARIABLE
 	| VARIABLE DECLARATION_VARIABLES
 	;
 
-VARIABLE: VAR_TYPE ID S_EQUAL S_DEFINITION					{checkVariable($2);}
-	| VAR_TYPE ID											{checkVariable($2);}
-	| VAR_TYPE ID S_COMMA VARIABLE							{checkVariable($2);}
-	| VAR_TYPE ID S_EQUAL S_DEFINITION S_COMMA VARIABLE		{checkVariable($2);}
-	| VAR_TYPE ID S_EQUAL S_DEFINITION						{checkVariable($2);}
-	| VAR_TYPE ID O_SQUAREB NUM C_SQUAREB					{checkVariable($2);}
-	| VAR_TYPE ID O_SQUAREB C_SQUAREB						{checkVariable($2);}
+VARIABLE: INT ID S_EQUAL NUMBER					{checkVariable($2);}
+	| CHAR ID S_EQUAL STRING					{checkVariable($2);}
+	| VAR_TYPE ID								{checkVariable($2);}
+	| VAR_TYPE ID S_COMMA VARIABLE				{checkVariable($2);}
+	| INT ID S_EQUAL NUMBER S_COMMA VARIABLE	{checkVariable($2);}
+	| CHAR ID S_EQUAL STRING S_COMMA VARIABLE	{checkVariable($2);}
+	| INT ID S_EQUAL NUMBER						{checkVariable($2);}
+	| CHAR ID S_EQUAL STRING					{checkVariable($2);}
+	| VAR_TYPE ID O_SQUAREB NUM C_SQUAREB		{checkVariable($2);}
+	| VAR_TYPE ID O_SQUAREB C_SQUAREB			{checkVariable($2);}
 	;
 
-VAR_TYPE: S_INTEGER
+VAR_TYPE: INT
+	| CHAR
+	;
+
+INT: S_INTEGER
 	| S_CONSTANT S_INTEGER
 	| S_UNSIGNED S_INTEGER
 	| S_CONSTANT S_UNSIGNED S_INTEGER
 	| S_INTEGER S_ASTERISK
 	| S_CONSTANT S_INTEGER S_ASTERISK
-	| S_CHAR
+	;
+
+CHAR: S_CHAR
 	| S_CONSTANTE S_CHAR
 	;
 
