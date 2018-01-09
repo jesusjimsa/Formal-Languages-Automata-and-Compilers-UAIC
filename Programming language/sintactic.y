@@ -906,21 +906,21 @@ OP_BINARY: ST_AND
 	| ST_NOT
 	;
 
-ST_AND: ID S_EQUAL ID CS_AND ID			{$1 = $3 && $5;}
-	| ID S_EQUAL ID CS_AND BINARY		{$1 = $3 && $5;}
-	| ID S_EQUAL BINARY CS_AND ID		{$1 = $3 && $5;}
-	| ID S_EQUAL BINARY CS_AND BINARY	{$1 = $3 && $5;}
+ST_AND: ID CS_AND ID		{$1 && $3;}
+	| ID CS_AND BINARY		{$1 && $3;}
+	| BINARY CS_AND ID		{$1 && $3;}
+	| BINARY CS_AND BINARY	{$1 && $3;}
 	;
 
-ST_OR: ID S_EQUAL ID CS_OR ID			{$1 = $3 || $5;}
-	| ID S_EQUAL ID CS_OR BINARY		{$1 = $3 || $5;}
-	| ID S_EQUAL BINARY CS_OR ID		{$1 = $3 || $5;}
-	| ID S_EQUAL BINARY CS_OR BINARY	{$1 = $3 || $5;}
+ST_OR: ID CS_OR ID			{$1 || $3;}
+	| ID CS_OR BINARY		{$1 || $3;}
+	| BINARY CS_OR ID		{$1 || $3;}
+	| BINARY CS_OR BINARY	{$1 || $3;}
 	;
 
-ST_NOT: ID S_EQUAL CS_NOT ID		{$1 != $3;}
-	| ID S_EQUAL CS_NOT BINARY		{$1 != $3;}
-	| ID S_EQUAL CS_NOT OP_BINARY	{$1 != $3;}
+ST_NOT: ID CS_NOT ID		{$1 != $3;}
+	| ID CS_NOT BINARY		{$1 != $3;}
+	| ID CS_NOT OP_BINARY	{$1 != $3;}
 	;
 
 ST_IF: CS_IF O_BRACKETS CONDITION C_BRACKETS CS_THEN ST1 SEMICOLON CS_ELSE ST1 SEMICOLON
