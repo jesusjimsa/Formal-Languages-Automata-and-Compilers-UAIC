@@ -28,7 +28,7 @@ Besides the syntactic analysis of the program, you should also provide semantic 
 	- the left side of an assignment has the same type as the right side
 	- the parameters of a function call have the types from the function definition
 
-Error messages should be provided if these conditions do not hold;
+Error messages should be provided if these conditions do not hold.  
 You must provide the evaluation of arithmetic expressions in a program; if a program in syntactically
 and semantically correct, for every call of the form print(expr), the actual value of expr will be printed,
 otherwise only the errors will showed.
