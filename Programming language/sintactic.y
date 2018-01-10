@@ -264,7 +264,7 @@ OPERATIONS: ID S_EQUAL NUM			{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($3)){
+										if(!variable_is_initialized($3)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
@@ -276,7 +276,7 @@ OPERATIONS: ID S_EQUAL NUM			{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($3)){
+										if(!variable_is_initialized($3)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
@@ -320,11 +320,11 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($3)){
+										if(!variable_is_initialized($3)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($5)){
+										if(!variable_is_initialized($5)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
@@ -398,7 +398,7 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($3)){
+										if(!variable_is_initialized($3)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
@@ -447,7 +447,7 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($5)){
+										if(!variable_is_initialized($5)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
@@ -528,11 +528,11 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 												perror("The variable was not declared\n");
 												exit(0);
 											}
-											if(!variable_is_intilized($3)){
+											if(!variable_is_initialized($3)){
 												perror("The variable was not initialized\n");
 												exit(0);
 											}
-											if(!variable_is_intilized($5)){
+											if(!variable_is_initialized($5)){
 												perror("The variable was not initialized\n");
 												exit(0);
 											}
@@ -593,7 +593,7 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 												perror("The variable was not declared\n");
 												exit(0);
 											}
-											if(!variable_is_intilized($3)){
+											if(!variable_is_initialized($3)){
 												perror("The variable was not initialized\n");
 												exit(0);
 											}
@@ -642,7 +642,7 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 												perror("The variable was not declared\n");
 												exit(0);
 											}
-											if(!variable_is_intilized($5)){
+											if(!variable_is_initialized($5)){
 												perror("The variable was not initialized\n");
 												exit(0);
 											}
@@ -723,11 +723,11 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 														perror("The variable was not declared\n");
 														exit(0);
 													}
-													if(!variable_is_intilized($3)){
+													if(!variable_is_initialized($3)){
 														perror("The variable was not initialized\n");
 														exit(0);
 													}
-													if(!variable_is_intilized($5)){
+													if(!variable_is_initialized($5)){
 														perror("The variable was not initialized\n");
 														exit(0);
 													}
@@ -788,7 +788,7 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 														perror("The variable was not declared\n");
 														exit(0);
 													}
-													if(!variable_is_intilized($3)){
+													if(!variable_is_initialized($3)){
 														perror("The variable was not initialized\n");
 														exit(0);
 													}
@@ -837,7 +837,7 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 														perror("The variable was not declared\n");
 														exit(0);
 													}
-													if(!variable_is_intilized($5)){
+													if(!variable_is_initialized($5)){
 														perror("The variable was not initialized\n");
 														exit(0);
 													}
@@ -918,11 +918,11 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($3)){
+										if(!variable_is_initialized($3)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($5)){
+										if(!variable_is_initialized($5)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
@@ -983,7 +983,7 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($3)){
+										if(!variable_is_initialized($3)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
@@ -1032,7 +1032,7 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($5)){
+										if(!variable_is_initialized($5)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
@@ -1113,11 +1113,11 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($3)){
+										if(!variable_is_initialized($3)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($5)){
+										if(!variable_is_initialized($5)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
@@ -1178,7 +1178,7 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($3)){
+										if(!variable_is_initialized($3)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
@@ -1228,7 +1228,7 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										if(!variable_is_intilized($5)){
+										if(!variable_is_initialized($5)){
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
@@ -1310,7 +1310,7 @@ ST_AND: ID CS_AND ID		{
 									perror("The variable was not declared\n");
 									exit(0);
 								}
-								if(!variable_is_intilized($3)){
+								if(!variable_is_initialized($3)){
 									perror("The variable was not initialized\n");
 									exit(0);
 								}
@@ -1331,7 +1331,7 @@ ST_AND: ID CS_AND ID		{
 									exit(0);
 								}
 
-								if(!variable_is_intilized($3)){
+								if(!variable_is_initialized($3)){
 									perror("The variable was not initialized\n");
 									exit(0);
 								}
@@ -1352,7 +1352,7 @@ ST_OR: ID CS_OR ID			{
 									exit(0);
 								}
 
-								if(!variable_is_intilized($3)){
+								if(!variable_is_initialized($3)){
 									perror("The variable was not initialized\n");
 									exit(0);
 								}
@@ -1371,7 +1371,7 @@ ST_OR: ID CS_OR ID			{
 									exit(0);
 								}
 
-								if(!variable_is_intilized($3)){
+								if(!variable_is_initialized($3)){
 									perror("The variable was not initialized\n");
 									exit(0);
 								}
@@ -1392,7 +1392,7 @@ ST_NOT: ID CS_NOT ID		{
 									exit(0);
 								}
 
-								if(!variable_is_intilized($3)){
+								if(!variable_is_initialized($3)){
 									perror("The variable was not initialized\n");
 									exit(0);
 								}

@@ -11,13 +11,12 @@ LETTER [a-zA-Z]+
 
 %%
 
-"#"			{return P_HASH;}
 "<"			{return CS_LESS;}
 ">"			{return CS_GREATER;}
 "and"|"AND"	{return CS_AND;}
 "or"|"OR"	{return CS_OR;}
 "=="		{return CS_EQUAL;}
-"!="		{return CS_DIFFERENT}
+"!="		{return CS_DIFFERENT;}
 "not"|"NOT"	{return CS_NOT;}
 "="			{return S_EQUAL;}
 "+"			{return S_ADD;}
@@ -36,7 +35,7 @@ LETTER [a-zA-Z]+
 "'"			{return SQUOT;}
 "\""		{return QUOTATION;}
 ";"			{return SEMICOLON;}
-","			{return COMMA;}
+","			{return S_COMMA;}
 "*"			{return S_ASTERISK;}
 "int"		{return S_INTEGER;}
 "char"		{return S_CHAR;}
@@ -52,16 +51,13 @@ LETTER [a-zA-Z]+
 "for"		{return CS_WHILE;}
 "struct"	{return S_STRUCT;}
 "print"		{return S_PRINT;}
-"DEFINE"	{return W_DEFINE;}
-
 
 "True"|"False"|{SBINARY}	 			{return BINARY;}
-"stdio.h"|"iostream"|"math"|"string.h"	{return LIBRARIES;}
 
 "exit"|"quit"|"bye"	{printf("Closing program\n"); exit(0);}
 
 {NUMBER}			{return NUM;}
 {LETTER}			{return ID;}
-"\""{LETTER}"\""	{return STRING}
+"\""{LETTER}"\""	{return STRING;}
 
 %%
