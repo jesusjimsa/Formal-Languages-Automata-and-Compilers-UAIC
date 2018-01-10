@@ -179,16 +179,16 @@ DECLARATION_VARIABLES:VARIABLE
 	| VARIABLE DECLARATION_VARIABLES
 	;
 
-VARIABLE: INT ID S_EQUAL NUM					{checkVariable($2,true);}
-	| CHAR ID S_EQUAL STRING					{checkVariable($2,true);}
-	| VAR_TYPE ID								{checkVariable($2,false);}
-	| VAR_TYPE ID S_COMMA VARIABLE				{checkVariable($2,true);}
-	| INT ID S_EQUAL NUM S_COMMA VARIABLE		{checkVariable($2,true);}
-	| CHAR ID S_EQUAL STRING S_COMMA VARIABLE	{checkVariable($2,true);}
-	| INT ID S_EQUAL NUM						{checkVariable($2,true);}
-	| CHAR ID S_EQUAL STRING					{checkVariable($2,true);}
-	| VAR_TYPE ID O_SQUAREB NUM C_SQUAREB		{checkVariable($2,true);}
-	| VAR_TYPE ID O_SQUAREB C_SQUAREB			{checkVariable($2,true);}
+VARIABLE: INT ID S_EQUAL NUM					{checkVariable($2, true);}
+	| CHAR ID S_EQUAL STRING					{checkVariable($2, true);}
+	| VAR_TYPE ID								{checkVariable($2, false);}
+	| VAR_TYPE ID S_COMMA VARIABLE				{checkVariable($2, true);}
+	| INT ID S_EQUAL NUM S_COMMA VARIABLE		{checkVariable($2, true);}
+	| CHAR ID S_EQUAL STRING S_COMMA VARIABLE	{checkVariable($2, true);}
+	| INT ID S_EQUAL NUM						{checkVariable($2, true);}
+	| CHAR ID S_EQUAL STRING					{checkVariable($2, true);}
+	| VAR_TYPE ID O_SQUAREB NUM C_SQUAREB		{checkVariable($2, true);}
+	| VAR_TYPE ID O_SQUAREB C_SQUAREB			{checkVariable($2, true);}
 	;
 
 VAR_TYPE: INT
