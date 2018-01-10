@@ -13,7 +13,8 @@
 	const int MAX_NUM_VARS_FUNCS = 1024;
 	char vars[MAX_NUM_VARS_FUNCS][256];		// 256 is the maximun lenght of a variable name
 	char funcs[MAX_NUM_VARS_FUNCS][1024];	// 1024 is the maximun lenght of a function signature
-
+	char vars_initialized[MAX_NUM_VARS_FUNCS][256];
+	
 	// For using this the compiler needs -std=C11
 	// gcc -Wall -std=c11 y.tab.c -o language
 	enum t_typename{
@@ -31,7 +32,7 @@
 	#define true (1 == 1)
 	#define false (!true)
 
-	void checkVariable(char *name){
+	void checkVariable(char *name, int is_initialized){
 		char hash = '#';
 
 		for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
@@ -41,6 +42,11 @@
 
 			if(!strcmp(&hash, vars[i])){
 				strcpy(vars[i], name);
+				
+				if(is_initialized){
+					strcpy(vars_initialized[i], name);
+				} //HERE
+				
 				i = MAX_NUM_VARS_FUNCS + 10;	// We don't need more iterations
 			}
 		}
@@ -59,6 +65,36 @@
 				i = MAX_NUM_VARS_FUNCS + 10;	// We don't need more iterations
 			}
 		}
+	}
+
+	int variable_is_defined(char *name){
+		for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
+			if(strcmp(name, vars[i])){
+				return true;
+			}
+		}
+	
+		return false;
+	}
+
+	int variable_is_initialized(char *name){
+		for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
+			if(strcmp(name,vars_initialized[i])){
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	int function_is_defined(char *name){
+		for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
+			if(strcmp(name,funcs[i])){
+				return true;
+			}
+		}
+
+		return false;
 	}
 %}
 
@@ -143,16 +179,16 @@ DECLARATION_VARIABLES:VARIABLE
 	| VARIABLE DECLARATION_VARIABLES
 	;
 
-VARIABLE: INT ID S_EQUAL NUM					{checkVariable($2);}
-	| CHAR ID S_EQUAL STRING					{checkVariable($2);}
-	| VAR_TYPE ID								{checkVariable($2);}
-	| VAR_TYPE ID S_COMMA VARIABLE				{checkVariable($2);}
-	| INT ID S_EQUAL NUM S_COMMA VARIABLE		{checkVariable($2);}
-	| CHAR ID S_EQUAL STRING S_COMMA VARIABLE	{checkVariable($2);}
-	| INT ID S_EQUAL NUM						{checkVariable($2);}
-	| CHAR ID S_EQUAL STRING					{checkVariable($2);}
-	| VAR_TYPE ID O_SQUAREB NUM C_SQUAREB		{checkVariable($2);}
-	| VAR_TYPE ID O_SQUAREB C_SQUAREB			{checkVariable($2);}
+VARIABLE: INT ID S_EQUAL NUM					{checkVariable($2,true);}
+	| CHAR ID S_EQUAL STRING					{checkVariable($2,true);}
+	| VAR_TYPE ID								{checkVariable($2,false);}
+	| VAR_TYPE ID S_COMMA VARIABLE				{checkVariable($2,true);}
+	| INT ID S_EQUAL NUM S_COMMA VARIABLE		{checkVariable($2,true);}
+	| CHAR ID S_EQUAL STRING S_COMMA VARIABLE	{checkVariable($2,true);}
+	| INT ID S_EQUAL NUM						{checkVariable($2,true);}
+	| CHAR ID S_EQUAL STRING					{checkVariable($2,true);}
+	| VAR_TYPE ID O_SQUAREB NUM C_SQUAREB		{checkVariable($2,true);}
+	| VAR_TYPE ID O_SQUAREB C_SQUAREB			{checkVariable($2,true);}
 	;
 
 VAR_TYPE: INT
@@ -179,8 +215,18 @@ CALL_FUNCTIONS: S_VARIABLE ID S_EQUAL FUNCTION_DEFINITION
 	| FUNCTION_DEFINITION
 	;
 
-FUNCTION_DEFINITION:ID O_BRACKETS C_BRACKETS
-	| ID O_BRACKETS PARAMETERS_WDECLARATION C_BRACKETS
+FUNCTION_DEFINITION:ID O_BRACKETS C_BRACKETS  			{
+															if(!function_is_defined($1)){
+																perror("The function was not declared\n");
+																exit(0);
+															}
+														}
+	| ID O_BRACKETS PARAMETERS_WDECLARATION C_BRACKETS {
+															if(!function_is_defined($1)){
+																perror("The function was not declared\n");
+																exit(0);
+															}
+														}
 	;
 
 PARAMETERS_WDECLARATION: ID S_COMMA PARAMETERS_WDECLARATION
@@ -213,10 +259,46 @@ OPERATIONS: ID S_EQUAL NUM			{
 												break;
 										}
 									}
-	| ID S_EQUAL ID S_INCREMENTO	{$1 = $3 + 1;}
-	| ID S_EQUAL ID S_DECREMENTO	{$1 = $3 - 1;}
-	| ID S_INCREMENTO				{$1 = $1 + 1;}
-	| ID S_DECREMENTO				{$1 = $1 - 1;}
+	| ID S_EQUAL ID S_INCREMENTO	{
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($3)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+
+										$1 = $3 + 1;
+									}
+	| ID S_EQUAL ID S_DECREMENTO	{
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($3)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+
+										$1 = $3 - 1;
+									}
+	| ID S_INCREMENTO				{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										$1 = $1 + 1;
+									}
+	| ID S_DECREMENTO				{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										$1 = $1 - 1;
+									}
 	| ST_PLUS
 	| ST_SUBSTRACTION
 	| ST_MULTIPLICATION
@@ -226,6 +308,27 @@ OPERATIONS: ID S_EQUAL NUM			{
 	;
 
 ST_PLUS: ID S_EQUAL ID S_ADD ID		{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_defined($5)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($3)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($5)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+
 										switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
@@ -283,9 +386,23 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
-										}
-									}
+										}					}
+
+
 	| ID S_EQUAL ID S_ADD NUM		{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($3)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+
 										switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
@@ -322,6 +439,19 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 										}
 									}
 	| ID S_EQUAL NUM S_ADD ID		{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_defined($5)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($5)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+
 										switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
@@ -358,6 +488,11 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 										}
 									}
 	| ID S_EQUAL NUM S_ADD NUM		{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
 										switch(typename($1)){
 											case TYPENAME_INT:
 											case TYPENAME_UNSIGNED_INT:
@@ -381,6 +516,27 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 	;
 
 ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
+											if(!variable_is_defined($1)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+											if(!variable_is_defined($3)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+											if(!variable_is_defined($5)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+											if(!variable_is_intilized($3)){
+												perror("The variable was not initialized\n");
+												exit(0);
+											}
+											if(!variable_is_intilized($5)){
+												perror("The variable was not initialized\n");
+												exit(0);
+											}
+
 											switch(typename($1)){
 												case TYPENAME_INT:
 													if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
@@ -429,6 +585,19 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 											}
 										}
 		| ID S_EQUAL ID S_SUB NUM		{
+											if(!variable_is_defined($1)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+											if(!variable_is_defined($3)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+											if(!variable_is_intilized($3)){
+												perror("The variable was not initialized\n");
+												exit(0);
+											}
+
 											switch(typename($1)){
 												case TYPENAME_INT:
 													if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
@@ -465,6 +634,19 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 											}
 										}
 	| ID S_EQUAL NUM S_SUB ID			{
+											if(!variable_is_defined($1)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+											if(!variable_is_defined($5)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+											if(!variable_is_intilized($5)){
+												perror("The variable was not initialized\n");
+												exit(0);
+											}
+
 											switch(typename($1)){
 												case TYPENAME_INT:
 													if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
@@ -501,6 +683,11 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 											}
 										}
 	| ID S_EQUAL NUM S_SUB NUM			{
+											if(!variable_is_defined($1)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+
 											switch(typename($1)){
 												case TYPENAME_INT:
 												case TYPENAME_UNSIGNED_INT:
@@ -524,6 +711,27 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 	;
 
 ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
+													if(!variable_is_defined($1)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+													if(!variable_is_defined($3)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+													if(!variable_is_defined($5)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+													if(!variable_is_intilized($3)){
+														perror("The variable was not initialized\n");
+														exit(0);
+													}
+													if(!variable_is_intilized($5)){
+														perror("The variable was not initialized\n");
+														exit(0);
+													}
+
 													switch(typename($1)){
 														case TYPENAME_INT:
 															if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
@@ -572,6 +780,19 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 													}
 												}
 	| ID S_EQUAL ID S_ASTERISK NUM				{
+													if(!variable_is_defined($1)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+													if(!variable_is_defined($3)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+													if(!variable_is_intilized($3)){
+														perror("The variable was not initialized\n");
+														exit(0);
+													}
+
 													switch(typename($1)){
 														case TYPENAME_INT:
 															if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
@@ -608,6 +829,19 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 													}
 												}
 	| ID S_EQUAL NUM S_ASTERISK ID				{
+													if(!variable_is_defined($1)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+													if(!variable_is_defined($5)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+													if(!variable_is_intilized($5)){
+														perror("The variable was not initialized\n");
+														exit(0);
+													}
+
 													switch(typename($1)){
 														case TYPENAME_INT:
 															if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
@@ -644,6 +878,11 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 													}
 												}
 	| ID S_EQUAL NUM S_ASTERISK NUM				{
+													if(!variable_is_defined($1)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+
 													switch(typename($1)){
 														case TYPENAME_INT:
 														case TYPENAME_UNSIGNED_INT:
@@ -667,6 +906,27 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 	;
 
 ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_defined($5)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($3)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($5)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+
 										switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
@@ -715,6 +975,19 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 										}
 									}
 	| ID S_EQUAL ID S_DIV NUM		{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($3)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+
 										switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
@@ -751,6 +1024,19 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 										}
 									}
 	| ID S_EQUAL NUM S_DIV ID		{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_defined($5)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($5)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+
 										switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
@@ -787,6 +1073,11 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 										}
 									}
 	| ID S_EQUAL NUM S_DIV NUM		{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
 										switch(typename($1)){
 											case TYPENAME_INT:
 											case TYPENAME_UNSIGNED_INT:
@@ -810,6 +1101,27 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 	;
 
 ST_MODULE: ID S_EQUAL ID S_MOD ID	{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_defined($5)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($3)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($5)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+
 										switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
@@ -858,6 +1170,20 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 										}
 									}
 	| ID S_EQUAL ID S_MOD NUM		{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($3)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+
+
 										switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
@@ -894,6 +1220,19 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 										}
 									}
 	| ID S_EQUAL NUM S_MOD ID		{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_defined($5)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										if(!variable_is_intilized($5)){
+											perror("The variable was not initialized\n");
+											exit(0);
+										}
+
 										switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
@@ -930,6 +1269,11 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 										}
 									}
 	| ID S_EQUAL NUM S_MOD NUM		{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
 										switch(typename($1)){
 											case TYPENAME_INT:
 											case TYPENAME_UNSIGNED_INT:
@@ -957,20 +1301,112 @@ OP_BINARY: ST_AND
 	| ST_NOT
 	;
 
-ST_AND: ID CS_AND ID		{$1 && $3;}
-	| ID CS_AND BINARY		{$1 && $3;}
-	| BINARY CS_AND ID		{$1 && $3;}
+ST_AND: ID CS_AND ID		{
+								if(!variable_is_defined($1)){
+									perror("The variable was not declared\n");
+									exit(0);
+								}
+								if(!variable_is_defined($3)){
+									perror("The variable was not declared\n");
+									exit(0);
+								}
+								if(!variable_is_intilized($3)){
+									perror("The variable was not initialized\n");
+									exit(0);
+								}
+
+								$1 && $3;
+							}
+	| ID CS_AND BINARY		{
+								if(!variable_is_defined($1)){
+									perror("The variable was not declared\n");
+									exit(0);
+								}
+
+								$1 && $3;
+							}
+	| BINARY CS_AND ID		{
+								if(!variable_is_defined($3)){
+									perror("The variable was not declared\n");
+									exit(0);
+								}
+
+								if(!variable_is_intilized($3)){
+									perror("The variable was not initialized\n");
+									exit(0);
+								}
+
+								$1 && $3;
+							}
 	| BINARY CS_AND BINARY	{$1 && $3;}
 	;
 
-ST_OR: ID CS_OR ID			{$1 || $3;}
-	| ID CS_OR BINARY		{$1 || $3;}
-	| BINARY CS_OR ID		{$1 || $3;}
+ST_OR: ID CS_OR ID			{
+								if(!variable_is_defined($1)){
+									perror("The variable was not declared\n");
+									exit(0);
+								}
+
+								if(!variable_is_defined($3)){
+									perror("The variable was not declared\n");
+									exit(0);
+								}
+
+								if(!variable_is_intilized($3)){
+									perror("The variable was not initialized\n");
+									exit(0);
+								}
+
+								$1 || $3;
+							}
+	| ID CS_OR BINARY		{$1 || $3;
+								if(!variable_is_defined($1)){
+									perror("The variable was not declared\n");
+									exit(0);
+								}
+							}
+	| BINARY CS_OR ID		{
+								if(!variable_is_defined($3)){
+									perror("The variable was not declared\n");
+									exit(0);
+								}
+
+								if(!variable_is_intilized($3)){
+									perror("The variable was not initialized\n");
+									exit(0);
+								}
+
+								$1 || $3;
+							}
 	| BINARY CS_OR BINARY	{$1 || $3;}
 	;
 
-ST_NOT: ID CS_NOT ID		{$1 != $3;}
-	| ID CS_NOT BINARY		{$1 != $3;}
+ST_NOT: ID CS_NOT ID		{
+								if(!variable_is_defined($1)){
+									perror("The variable was not declared\n");
+									exit(0);
+								}
+
+								if(!variable_is_defined($3)){
+									perror("The variable was not declared\n");
+									exit(0);
+								}
+
+								if(!variable_is_intilized($3)){
+									perror("The variable was not initialized\n");
+									exit(0);
+								}
+
+								$1 != $3;
+							}
+	| ID CS_NOT BINARY		{
+								if(!variable_is_defined($1)){
+									perror("The variable was not declared\n");
+									exit(0);
+								}
+
+								$1 != $3;
+							}
 	| ID CS_NOT OP_BINARY	{$1 != $3;}
 	;
 
@@ -991,14 +1427,100 @@ ST1: ST_IF
 	| OPERATIONS
 	;
 
-CONDITION: ID_NUM CS_EQUAL ID_NUM	{$1 == $3;}
-	| ID_NUM CS_GREATER ID_NUM		{$1 > $3;}
-	| ID_NUM CS_LESS ID_NUM			{$1 < $3;}
-	| ID_NUM CS_DIFFERENT ID_NUM	{$1 != $3;}
-	| CONDITION CS_AND CONDITION	{$1 && $3;}
-	| CONDITION CS_OR CONDITION		{$1 || $3;}
-	| CS_NOT CONDITION				{!$1;}
-	| ID_NUM						{$1;}
+CONDITION: ID_NUM CS_EQUAL ID_NUM	{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										
+										$1 == $3;
+									}
+	| ID_NUM CS_GREATER ID_NUM	{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+										
+										$1 > $3;
+									}
+	| ID_NUM CS_LESS ID_NUM			{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										$1 < $3;
+									}
+	| ID_NUM CS_DIFFERENT ID_NUM	{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										$1 != $3;
+									}
+	| CONDITION CS_AND CONDITION	{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										$1 && $3;
+									}
+	| CONDITION CS_OR CONDITION		{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										$1 || $3;
+									}
+	| CS_NOT CONDITION				{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										!$1;
+									}
+	| ID_NUM						{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										$1;
+									}
 	;
 
 PRINTING: S_PRINT STRING	{printf("Printing %s\n", $2);}
@@ -1006,6 +1528,11 @@ PRINTING: S_PRINT STRING	{printf("Printing %s\n", $2);}
 	;
 
 STRING_OP: ID S_EQUAL STRING			{
+											if(!variable_is_defined($1)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+
 											switch(typename($1)){
 												case TYPENAME_STRING:
 													$1 = $3;
@@ -1022,6 +1549,11 @@ STRING_OP: ID S_EQUAL STRING			{
 											}
 										}
 	| ID S_EQUAL STRING S_ADD STRING	{
+											if(!variable_is_defined($1)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+
 											switch(typename($1)){
 												case TYPENAME_STRING:
 													$1 = $3;
@@ -1037,9 +1569,18 @@ STRING_OP: ID S_EQUAL STRING			{
 													perror("You can't assign a string to this type of data\n");
 													exit(0);
 											}
-											$1 = $3; strcat($1, $5);
 										}
 	| ID S_EQUAL ID S_ADD STRING		{
+											if(!variable_is_defined($1)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+
+											if(!variable_is_defined($3)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+
 											switch(typename($1)){
 												case TYPENAME_STRING:
 													if(typename($3) == TYPENAME_STRING || typename($3) == TYPENAME_CONST_STRING){
@@ -1063,6 +1604,16 @@ STRING_OP: ID S_EQUAL STRING			{
 											}
 										}
 	| ID S_EQUAL STRING S_ADD ID		{
+											if(!variable_is_defined($1)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+
+											if(!variable_is_defined($5)){
+												perror("The variable was not declared\n");
+												exit(0);
+											}
+
 											switch(typename($1)){
 												case TYPENAME_STRING:
 													if(typename($5) == TYPENAME_STRING || typename($5) == TYPENAME_CONST_STRING){
@@ -1099,10 +1650,10 @@ ID_NUM: ID
 
 int main(){
 	char hash = '#';
-	
+
 	for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
-		strcpy(vars[i], hash);
-		strcpy(funcs[i], hash);
+		strcpy(vars[i], &hash);
+		strcpy(funcs[i], &hash);
 	}
 
 	yyparse();
