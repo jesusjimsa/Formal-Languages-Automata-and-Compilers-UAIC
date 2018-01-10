@@ -9,7 +9,7 @@
 	char funcs[MAX_NUM_VARS_FUNCS][1024];	// 1024 is the maximun lenght of a function signature
 
 	// For using this the compiler needs -std=C11
-	// gcc -Wall -std=C11 sintactic.y -o language
+	// gcc -Wall -std=c11 y.tab.c -o language
 	enum t_typename{
 		TYPENAME_STRING,
 		TYPENAME_CONST_STRING,
@@ -20,18 +20,40 @@
 		TYPENAME_OTHER
 	};
 
-	#define typename(x) _Generic((x),	/* Get the name of a type */
-			char: TYPENAME_STRING,
-			const char: TYPENAME_CONST_STRING,
-			int: TYPENAME_INT,
-			const int: TYPENAME_CONST_INT,
-			unsigned int: TYPENAME_UNSIGNED_INT,
-			const unsigned int: TYPENAME_CONST_UNSIGNED_INT,
-			default: TYPENAME_OTHER
-			)
+	#define typename(x) _Generic((x), char: TYPENAME_STRING, const char: TYPENAME_CONST_STRING, int: TYPENAME_INT, const int: TYPENAME_CONST_INT, unsigned int: TYPENAME_UNSIGNED_INT, const unsigned int: TYPENAME_CONST_UNSIGNED_INT, default: TYPENAME_OTHER)
 	
 	#define true (1 == 1)
 	#define false (!true)
+
+	void checkVariable(char *name){
+		char hash = '#';
+
+		for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
+			if(!strcmp(name, vars[i])){	// This means they have the same name
+				perror("This variable was already declared\n");
+			}
+
+			if(!strcmp(&hash, vars[i])){
+				strcpy(vars[i], name);
+				i = MAX_NUM_VARS_FUNCS + 10;	// We don't need more iterations
+			}
+		}
+	}
+
+	void checkFunctionSignature(char *name){
+		char hash = '#';
+
+		for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
+			if(!strcmp(name, funcs[i])){	// This means they have the same name
+				perror("This function was already declared\n");
+			}
+
+			if(!strcmp(&hash, funcs[i])){
+				strcpy(funcs[i], name);
+				i = MAX_NUM_VARS_FUNCS + 10;	// We don't need more iterations
+			}
+		}
+	}
 %}
 
 // Characters
@@ -161,7 +183,30 @@ PARAMETERS_WDECLARATION: ID S_COMMA PARAMETERS_WDECLARATION
 	| S_DEFINITION
 	;
 
-OPERATIONS: ID S_EQUAL S_DEFINITION	{assign($1, $3);}
+OPERATIONS: ID S_EQUAL NUM			{
+										switch(typename($1)){
+											case TYPENAME_INT:
+												$1 = $3;
+
+												break;
+											case TYPENAME_UNSIGNED_INT:
+												if($3 > 0){
+													$1 = $3;
+												}
+												else{
+													perror("You are trying to assign a negative number to an unsigned integer\n");
+													exit(0);
+												}
+
+												break;
+											case TYPENAME_CONST_INT:
+											case TYPENAME_CONST_UNSIGNED_INT:
+												perror("You can't change the value of a constant!\n");
+												exit(0);
+
+												break;
+										}
+									}
 	| ID S_EQUAL ID S_INCREMENTO	{$1 = $3 + 1;}
 	| ID S_EQUAL ID S_DECREMENTO	{$1 = $3 - 1;}
 	| ID S_INCREMENTO				{$1 = $1 + 1;}
@@ -954,8 +999,86 @@ PRINTING: S_PRINT STRING	{printf("Printing %s\n", $2);}
 	| S_PRINT NUM			{printf("Printing %d\n", $2);}
 	;
 
-STRING_OP: ID S_EQUAL STRING			{$1 = $3;}
-	| ID S_EQUAL STRING S_ADD STRING	{$1 = $3; strcat($1, $5);}
+STRING_OP: ID S_EQUAL STRING			{
+											switch(typename($1)){
+												case TYPENAME_STRING:
+													$1 = $3;
+
+													break;
+												case TYPENAME_CONST_STRING:
+													perror("You can't change the value of a constant!\n");
+													exit(0);
+
+													break;
+												default:
+													perror("You can't assign a string to this type of data\n");
+													exit(0);
+											}
+										}
+	| ID S_EQUAL STRING S_ADD STRING	{
+											switch(typename($1)){
+												case TYPENAME_STRING:
+													$1 = $3;
+													strcat($1, $5);
+
+													break;
+												case TYPENAME_CONST_STRING:
+													perror("You can't change the value of a constant!\n");
+													exit(0);
+
+													break;
+												default:
+													perror("You can't assign a string to this type of data\n");
+													exit(0);
+											}
+											$1 = $3; strcat($1, $5);
+										}
+	| ID S_EQUAL ID S_ADD STRING		{
+											switch(typename($1)){
+												case TYPENAME_STRING:
+													if(typename($3) == TYPENAME_STRING || typename($3) == TYPENAME_CONST_STRING){
+														$1 = $3;
+														strcat($1, $5);
+													}
+													else{
+														perror("There has been a problem with variables, revise the types\n");
+														exit(0);
+													}
+
+													break;
+												case TYPENAME_CONST_STRING:
+													perror("You can't change the value of a constant!\n");
+													exit(0);
+
+													break;
+												default:
+													perror("You can't assign a string to this type of data\n");
+													exit(0);
+											}
+										}
+	| ID S_EQUAL STRING S_ADD ID		{
+											switch(typename($1)){
+												case TYPENAME_STRING:
+													if(typename($5) == TYPENAME_STRING || typename($5) == TYPENAME_CONST_STRING){
+														$1 = $3;
+														strcat($1, $5);
+													}
+													else{
+														perror("There has been a problem with variables, revise the types\n");
+														exit(0);
+													}
+
+													break;
+												case TYPENAME_CONST_STRING:
+													perror("You can't change the value of a constant!\n");
+													exit(0);
+
+													break;
+												default:
+													perror("You can't assign a string to this type of data\n");
+													exit(0);
+											}
+										}
 	;
 
 USER_DEF: S_STRUCT ID O_CURLY DATA C_CURLY;
@@ -968,73 +1091,10 @@ ID_NUM: ID
 	| NUM
 %%
 
-void checkVariable(char *name){
-	int already_declared = 0;
-
-	for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
-		if(!strcmp(&name, &vars[i])){	// This means they have the same name
-			perror("This variable was already declared\n");
-		}
-
-		if(!strcmp('#', &vars[i])){
-			vars[i] = &name;
-			i = MAX_NUM_VARS_FUNCS + 10;	// We don't need more iterations
-		}
-	}
-}
-
-void checkFunctionSignature(char *name){
-	int already_declared = 0;
-
-	for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
-		if(!strcmp(&name, &funcs[i])){	// This means they have the same name
-			perror("This function was already declared\n");
-		}
-
-		if(!strcmp('#', &funcs[i])){
-			funcs[i] = &name;
-			i = MAX_NUM_VARS_FUNCS + 10;	// We don't need more iterations
-		}
-	}
-}
-
-/*
-	There is an option for every possible case, in other cases there
-	will be an error message
-*/
-void assign(int var, int val){
-	var = val;
-}
-
-void assign(const char *var, char *val){
-	perror("You can't change the value of a constant!\n");
-	exit(0);
-}
-
-void assign(unsigned int var, unsigned int val){
-	var = val;
-}
-
-void assign(const unsigned int var, const unsigned int val){
-	perror("You can't change the value of a constant!\n");
-	exit(0);
-}
-
-void assign(char *var, char *val){
-	var = val;
-}
-
-void assign(const int var, int val){
-	perror("You can't change the value of a constant!\n");
-	exit(0);
-}
-
-int checkTypeInt()
-
 int main(){
 	for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
 		vars[i] = '#';
-		funcs[i] = '#'
+		funcs[i] = '#';
 	}
 
 	yyparse();
