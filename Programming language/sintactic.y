@@ -1315,7 +1315,7 @@ ST_AND: ID CS_AND ID		{
 									exit(0);
 								}
 
-								$1 && $3;
+								return $1 && $3;
 							}
 	| ID CS_AND BINARY		{
 								if(!variable_is_defined($1)){
@@ -1323,7 +1323,7 @@ ST_AND: ID CS_AND ID		{
 									exit(0);
 								}
 
-								$1 && $3;
+								return $1 && $3;
 							}
 	| BINARY CS_AND ID		{
 								if(!variable_is_defined($3)){
@@ -1336,7 +1336,7 @@ ST_AND: ID CS_AND ID		{
 									exit(0);
 								}
 
-								$1 && $3;
+								return $1 && $3;
 							}
 	| BINARY CS_AND BINARY	{$1 && $3;}
 	;
@@ -1357,13 +1357,15 @@ ST_OR: ID CS_OR ID			{
 									exit(0);
 								}
 
-								$1 || $3;
+								return $1 || $3;
 							}
-	| ID CS_OR BINARY		{$1 || $3;
+	| ID CS_OR BINARY		{
 								if(!variable_is_defined($1)){
 									perror("The variable was not declared\n");
 									exit(0);
 								}
+
+								return $1 || $3;
 							}
 	| BINARY CS_OR ID		{
 								if(!variable_is_defined($3)){
@@ -1376,7 +1378,7 @@ ST_OR: ID CS_OR ID			{
 									exit(0);
 								}
 
-								$1 || $3;
+								return $1 || $3;
 							}
 	| BINARY CS_OR BINARY	{$1 || $3;}
 	;
@@ -1397,7 +1399,7 @@ ST_NOT: ID CS_NOT ID		{
 									exit(0);
 								}
 
-								$1 != $3;
+								return $1 != $3;
 							}
 	| ID CS_NOT BINARY		{
 								if(!variable_is_defined($1)){
@@ -1405,7 +1407,7 @@ ST_NOT: ID CS_NOT ID		{
 									exit(0);
 								}
 
-								$1 != $3;
+								return $1 != $3;
 							}
 	| ID CS_NOT OP_BINARY	{$1 != $3;}
 	;
@@ -1438,7 +1440,7 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 											exit(0);
 										}
 										
-										$1 == $3;
+										return $1 == $3;
 									}
 	| ID_NUM CS_GREATER ID_NUM	{
 										if(!variable_is_defined($1)){
@@ -1451,7 +1453,7 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 											exit(0);
 										}
 										
-										$1 > $3;
+										return $1 > $3;
 									}
 	| ID_NUM CS_LESS ID_NUM			{
 										if(!variable_is_defined($1)){
@@ -1464,7 +1466,7 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 											exit(0);
 										}
 
-										$1 < $3;
+										return $1 < $3;
 									}
 	| ID_NUM CS_DIFFERENT ID_NUM	{
 										if(!variable_is_defined($1)){
@@ -1477,7 +1479,7 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 											exit(0);
 										}
 
-										$1 != $3;
+										return $1 != $3;
 									}
 	| CONDITION CS_AND CONDITION	{
 										if(!variable_is_defined($1)){
@@ -1490,7 +1492,7 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 											exit(0);
 										}
 
-										$1 && $3;
+										return $1 && $3;
 									}
 	| CONDITION CS_OR CONDITION		{
 										if(!variable_is_defined($1)){
@@ -1503,7 +1505,7 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 											exit(0);
 										}
 
-										$1 || $3;
+										return $1 || $3;
 									}
 	| CS_NOT CONDITION				{
 										if(!variable_is_defined($1)){
@@ -1511,7 +1513,7 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 											exit(0);
 										}
 
-										!$1;
+										return !$1;
 									}
 	| ID_NUM						{
 										if(!variable_is_defined($1)){
@@ -1519,7 +1521,7 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 											exit(0);
 										}
 
-										$1;
+										return $1;
 									}
 	;
 

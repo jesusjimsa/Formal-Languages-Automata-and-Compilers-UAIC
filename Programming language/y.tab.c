@@ -640,7 +640,7 @@ static const yytype_uint16 yyrline[] =
      307,   310,   392,   441,   490,   518,   587,   636,   685,   713,
      782,   831,   880,   908,   977,  1026,  1075,  1103,  1172,  1222,
     1271,  1299,  1300,  1301,  1304,  1320,  1328,  1341,  1344,  1362,
-    1368,  1381,  1384,  1402,  1410
+    1370,  1383,  1386,  1404,  1412
 };
 #endif
 
@@ -2882,7 +2882,7 @@ yyreduce:
 									exit(0);
 								}
 
-								(yyvsp[(1) - (3)]) && (yyvsp[(3) - (3)]);
+								return (yyvsp[(1) - (3)]) && (yyvsp[(3) - (3)]);
 							}
     break;
 
@@ -2894,7 +2894,7 @@ yyreduce:
 									exit(0);
 								}
 
-								(yyvsp[(1) - (3)]) && (yyvsp[(3) - (3)]);
+								return (yyvsp[(1) - (3)]) && (yyvsp[(3) - (3)]);
 							}
     break;
 
@@ -2911,7 +2911,7 @@ yyreduce:
 									exit(0);
 								}
 
-								(yyvsp[(1) - (3)]) && (yyvsp[(3) - (3)]);
+								return (yyvsp[(1) - (3)]) && (yyvsp[(3) - (3)]);
 							}
     break;
 
@@ -2938,22 +2938,24 @@ yyreduce:
 									exit(0);
 								}
 
-								(yyvsp[(1) - (3)]) || (yyvsp[(3) - (3)]);
+								return (yyvsp[(1) - (3)]) || (yyvsp[(3) - (3)]);
 							}
     break;
 
   case 89:
 #line 1362 "Programming language/sintactic.y"
-    {(yyvsp[(1) - (3)]) || (yyvsp[(3) - (3)]);
+    {
 								if(!variable_is_defined((yyvsp[(1) - (3)]))){
 									perror("The variable was not declared\n");
 									exit(0);
 								}
+
+								return (yyvsp[(1) - (3)]) || (yyvsp[(3) - (3)]);
 							}
     break;
 
   case 90:
-#line 1368 "Programming language/sintactic.y"
+#line 1370 "Programming language/sintactic.y"
     {
 								if(!variable_is_defined((yyvsp[(3) - (3)]))){
 									perror("The variable was not declared\n");
@@ -2965,17 +2967,17 @@ yyreduce:
 									exit(0);
 								}
 
-								(yyvsp[(1) - (3)]) || (yyvsp[(3) - (3)]);
+								return (yyvsp[(1) - (3)]) || (yyvsp[(3) - (3)]);
 							}
     break;
 
   case 91:
-#line 1381 "Programming language/sintactic.y"
+#line 1383 "Programming language/sintactic.y"
     {(yyvsp[(1) - (3)]) || (yyvsp[(3) - (3)]);}
     break;
 
   case 92:
-#line 1384 "Programming language/sintactic.y"
+#line 1386 "Programming language/sintactic.y"
     {
 								if(!variable_is_defined((yyvsp[(1) - (3)]))){
 									perror("The variable was not declared\n");
@@ -2992,30 +2994,30 @@ yyreduce:
 									exit(0);
 								}
 
-								(yyvsp[(1) - (3)]) != (yyvsp[(3) - (3)]);
+								return (yyvsp[(1) - (3)]) != (yyvsp[(3) - (3)]);
 							}
     break;
 
   case 93:
-#line 1402 "Programming language/sintactic.y"
+#line 1404 "Programming language/sintactic.y"
     {
 								if(!variable_is_defined((yyvsp[(1) - (3)]))){
 									perror("The variable was not declared\n");
 									exit(0);
 								}
 
-								(yyvsp[(1) - (3)]) != (yyvsp[(3) - (3)]);
+								return (yyvsp[(1) - (3)]) != (yyvsp[(3) - (3)]);
 							}
     break;
 
   case 94:
-#line 1410 "Programming language/sintactic.y"
+#line 1412 "Programming language/sintactic.y"
     {(yyvsp[(1) - (3)]) != (yyvsp[(3) - (3)]);}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 3019 "Programming language/y.tab.c"
+#line 3021 "Programming language/y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -3229,7 +3231,7 @@ yyreturn:
 }
 
 
-#line 1649 "Programming language/sintactic.y"
+#line 1651 "Programming language/sintactic.y"
 
 
 int main(){

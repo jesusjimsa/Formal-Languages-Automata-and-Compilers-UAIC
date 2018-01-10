@@ -12,6 +12,7 @@ compiler: $(SRC)/sintactic.y
 analyser: $(SRC)/sintactic.l
 	lex $(SRC)/sintactic.l
 	mv ./lex.yy.c $(SRC)/
+	
 
 clean:
 	echo "Cleaning..."
