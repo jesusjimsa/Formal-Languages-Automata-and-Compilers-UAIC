@@ -1,16 +1,23 @@
 BIN = bin
 SRC = Programming\ language
-CFLAGS = gcc -O3 -g -Wall -std=c11
+CFLAGS = gcc -O3 -g -Wall -std=c11 -ll
+YACCFLAGS = yacc -d
 
-language: source $(SRC)/y.tab.c
-	$(CFLAGS) $(SRC)/y.tab.c -o $(BIN)/language
+language: compiler analyser $(SRC)/y.tab.c
+	$(CFLAGS) $(SRC)/y.tab.c $(SRC)/lex.yy.c -o $(BIN)/language
 
-source: $(SRC)/sintactic.y
-	yacc $(SRC)/sintactic.y -o $(SRC)/y.tab.c
+compiler: $(SRC)/sintactic.y 
+	$(YACCFLAGS) $(SRC)/sintactic.y -o $(SRC)/y.tab.c
+
+analyser: $(SRC)/sintactic.l
+	lex $(SRC)/sintactic.l
+	mv ./lex.yy.c $(SRC)/
 
 clean:
 	echo "Cleaning..."
 	rm $(BIN)/*
 
-mrproper: clean
+mrproper: 
 	rm $(SRC)/y.tab.c
+	rm $(SRC)/lex.yy.c
+	rm $(BIN)/*
