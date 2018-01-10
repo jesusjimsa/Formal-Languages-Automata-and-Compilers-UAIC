@@ -4,6 +4,12 @@
 	#include <stdlib.h>
 	#include <string.h>
 
+	void yyerror(const char* msg) {
+    	fprintf(stderr, "%s\n", msg);
+	}
+
+	int yylex();
+
 	const int MAX_NUM_VARS_FUNCS = 1024;
 	char vars[MAX_NUM_VARS_FUNCS][256];		// 256 is the maximun lenght of a variable name
 	char funcs[MAX_NUM_VARS_FUNCS][1024];	// 1024 is the maximun lenght of a function signature
@@ -21,7 +27,7 @@
 	};
 
 	#define typename(x) _Generic((x), char: TYPENAME_STRING, const char: TYPENAME_CONST_STRING, int: TYPENAME_INT, const int: TYPENAME_CONST_INT, unsigned int: TYPENAME_UNSIGNED_INT, const unsigned int: TYPENAME_CONST_UNSIGNED_INT, default: TYPENAME_OTHER)
-	
+
 	#define true (1 == 1)
 	#define false (!true)
 
@@ -112,12 +118,12 @@ FUNCIONES: FUNCION_PRINCIPAL
 	;
 
 FUNCION_PRINCIPAL: S_PRINCIPAL O_CURLY EXPRESIONS C_CURLY
-	| S_PRINCIPAL O_BRACKETS S_ARGUMENTS C_BRACKETS O_CURLY EXPRESIONS C_CURLY 
+	| S_PRINCIPAL O_BRACKETS S_ARGUMENTS C_BRACKETS O_CURLY EXPRESIONS C_CURLY
 	;
 
 FUNCION: S_DEFFUNCTION SIGNATURE O_CURLY EXPRESIONS C_CURLY		{checkFunctionSignature($2);};
 
-SIGNATURE: ID O_BRACKETS C_BRACKETS 
+SIGNATURE: ID O_BRACKETS C_BRACKETS
 	| ID O_BRACKETS PARAMETERS C_BRACKETS
 	;
 
@@ -176,7 +182,7 @@ CALL_FUNCTIONS: S_VARIABLE ID S_EQUAL FUNCTION_DEFINITION
 FUNCTION_DEFINITION:ID O_BRACKETS C_BRACKETS
 	| ID O_BRACKETS PARAMETERS_WDECLARATION C_BRACKETS
 	;
-	
+
 PARAMETERS_WDECLARATION: ID S_COMMA PARAMETERS_WDECLARATION
 	| S_DEFINITION S_COMMA PARAMETERS_WDECLARATION
 	| ID
@@ -1092,9 +1098,11 @@ ID_NUM: ID
 %%
 
 int main(){
+	char hash = '#';
+	
 	for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
-		vars[i] = '#';
-		funcs[i] = '#';
+		strcpy(vars[i], hash);
+		strcpy(funcs[i], hash);
 	}
 
 	yyparse();
