@@ -14,12 +14,15 @@
 
 	const int MAX_NUM_FUNCS = 1024;
 	const int MAX_NUM_VARS = 52;
+	const char *NAME_INT = "int";
+	const char *NAME_STRING = "string";
+
 	char *vars[MAX_NUM_VARS];		// 52 variables, one for each letter of the alphabet, upper and lower
 	char funcs[MAX_NUM_FUNCS][1024];	// 1024 is the maximun lenght of a function signature
 	char *strings[MAX_NUM_VARS];
 	int nums[MAX_NUM_VARS];
 	char vars_initialized[MAX_NUM_VARS];
-	
+
 	// For using this the compiler needs -std=C11
 	// gcc -Wall -std=c11 y.tab.c -o language
 	enum t_typename{
@@ -51,7 +54,7 @@
 			printf("Variable affected: %c", idx);
 			exit(0);
 		}
-			
+
 		if(is_initialized){
 			vars_initialized[bucket] = idx;
 		}
@@ -102,7 +105,7 @@
 
 	int computeSymbolIndex(char token){
 		int idx = -1;
-		
+
 		if(islower(token)) {
 			idx = token - 'a' + 26;
 		}
@@ -113,40 +116,40 @@
 		}
 
 		return idx;
-	} 
+	}
 
 	/* returns the value of a given symbol */
 	char *symbolType(char symbol){
 		int bucket = computeSymbolIndex(symbol);
-		
+
 		return vars[bucket];
 	}
 
-	/* returns the value of a given symbol */
+	/* returns the value of a given symbol (strings) */
 	char *symbolValString(char symbol){
 		int bucket = computeSymbolIndex(symbol);
-		
+
 		return strings[bucket];
 	}
 
-	/* returns the value of a given symbol */
+	/* returns the value of a given symbol (numbers) */
 	int symbolValInt(char symbol){
 		int bucket = computeSymbolIndex(symbol);
-		
+
 		return nums[bucket];
 	}
 
 	/* updates the value of a given symbol (numbers) */
 	void updateSymbolValInt(char symbol, int val){
 		int bucket = computeSymbolIndex(symbol);
-		
+
 		nums[bucket] = val;
 	}
 
 	/* updates the value of a given symbol (strings) */
 	void updateSymbolValString(char symbol, char *val){
 		int bucket = computeSymbolIndex(symbol);
-		
+
 		strcpy(strings[bucket], val);
 	}
 
@@ -251,16 +254,16 @@ DECLARATION_VARIABLES:VARIABLE
 	| VARIABLE DECLARATION_VARIABLES
 	;
 
-VARIABLE: INT ID S_EQUAL NUM					{checkVariable($2, true);}
-	| CHAR ID S_EQUAL STRING					{checkVariable($2, true);}
-	| VAR_TYPE ID								{checkVariable($2, false);}
-	| VAR_TYPE ID S_COMMA VARIABLE				{checkVariable($2, true);}
-	| INT ID S_EQUAL NUM S_COMMA VARIABLE		{checkVariable($2, true);}
-	| CHAR ID S_EQUAL STRING S_COMMA VARIABLE	{checkVariable($2, true);}
-	| INT ID S_EQUAL NUM						{checkVariable($2, true);}
-	| CHAR ID S_EQUAL STRING					{checkVariable($2, true);}
-	| VAR_TYPE ID O_SQUAREB NUM C_SQUAREB		{checkVariable($2, true);}
-	| VAR_TYPE ID O_SQUAREB C_SQUAREB			{checkVariable($2, true);}
+VARIABLE: INT ID S_EQUAL NUM					{checkVariable($2, true); declareSymbol($2, NAME_INT); updateSymbolValInt($2, $4);}
+	| CHAR ID S_EQUAL STRING					{checkVariable($2, true); declareSymbol($2, NAME_STRING); updateSymbolValString($2, $4);}
+	| INT ID									{checkVariable($2, false); declareSymbol($2, NAME_INT);}
+	| CHAR ID									{checkVariable($2, false); declareSymbol($2, NAME_STRING);}
+	| INT ID S_COMMA VARIABLE					{checkVariable($2, false); declareSymbol($2, NAME_INT);}
+	| CHAR ID S_COMMA VARIABLE					{checkVariable($2, false); declareSymbol($2, NAME_STRING);}
+	| INT ID S_EQUAL NUM S_COMMA VARIABLE		{checkVariable($2, true); declareSymbol($2, NAME_INT); updateSymbolValInt($2, $4);}
+	| CHAR ID S_EQUAL STRING S_COMMA VARIABLE	{checkVariable($2, true); declareSymbol($2, NAME_STRING); updateSymbolValString($2, $4);}
+	| VAR_TYPE ID O_SQUAREB NUM C_SQUAREB		{/* checkVariable($2, true); */}
+	| VAR_TYPE ID O_SQUAREB C_SQUAREB			{/* checkVariable($2, true); */}
 	;
 
 VAR_TYPE: INT
@@ -308,7 +311,7 @@ PARAMETERS_WDECLARATION: ID S_COMMA PARAMETERS_WDECLARATION
 	;
 
 OPERATIONS: ID S_EQUAL NUM			{
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 												$1 = $3;
 
@@ -329,7 +332,9 @@ OPERATIONS: ID S_EQUAL NUM			{
 												exit(0);
 
 												break;
-										}
+										} */
+
+										updateSymbolValInt($1, $3);
 									}
 	| ID S_EQUAL ID S_INCREMENTO	{
 										if(!variable_is_defined($3)){
@@ -341,7 +346,8 @@ OPERATIONS: ID S_EQUAL NUM			{
 											exit(0);
 										}
 
-										$1 = $3 + 1;
+										// $1 = $3 + 1;
+										updateSymbolValInt($1, symbolValInt($3) + 1);
 									}
 	| ID S_EQUAL ID S_DECREMENTO	{
 										if(!variable_is_defined($3)){
@@ -353,7 +359,8 @@ OPERATIONS: ID S_EQUAL NUM			{
 											exit(0);
 										}
 
-										$1 = $3 - 1;
+										// $1 = $3 - 1;
+										updateSymbolValInt($1, symbolValInt($3) - 1);
 									}
 	| ID S_INCREMENTO				{
 										if(!variable_is_defined($1)){
@@ -361,7 +368,8 @@ OPERATIONS: ID S_EQUAL NUM			{
 											exit(0);
 										}
 
-										$1 = $1 + 1;
+										// $1 = $1 + 1;
+										updateSymbolValInt($1, symbolValInt($1) + 1);
 									}
 	| ID S_DECREMENTO				{
 										if(!variable_is_defined($1)){
@@ -369,7 +377,8 @@ OPERATIONS: ID S_EQUAL NUM			{
 											exit(0);
 										}
 
-										$1 = $1 - 1;
+										// $1 = $1 - 1;
+										updateSymbolValInt($1, symbolValInt($1) - 1);
 									}
 	| ST_PLUS
 	| ST_SUBSTRACTION
@@ -401,7 +410,7 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											exit(0);
 										}
 
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
 													if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
@@ -458,10 +467,28 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
-										}					
+										} */
+
+										if(!strcmp(symbolType($1), NAME_INT)){
+											if(!strcmp(symbolType($3), NAME_INT)){
+												if(!strcmp(symbolType($5), NAME_INT)){
+													updateSymbolValInt($1, symbolValInt($3) + symbolValInt($5));
+												}
+												else{
+													perror("Wrong types\n");
+													exit(0);
+												}
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
+											}
+										}
+										else{
+											perror("Wrong types\n");
+											exit(0);
+										}
 									}
-
-
 	| ID S_EQUAL ID S_ADD NUM		{
 										if(!variable_is_defined($1)){
 											perror("The variable was not declared\n");
@@ -476,7 +503,7 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											exit(0);
 										}
 
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
 													$1 = $3 + $5;
@@ -509,6 +536,20 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
+										} */
+
+										if(!strcmp(symbolType($1), NAME_INT)){
+											if(!strcmp(symbolType($3), NAME_INT)){
+												updateSymbolValInt($1, symbolValInt($3) + $5);
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
+											}
+										}
+										else{
+											perror("Wrong types\n");
+											exit(0);
 										}
 									}
 	| ID S_EQUAL NUM S_ADD ID		{
@@ -525,7 +566,7 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											exit(0);
 										}
 
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
 													$1 = $3 + $5;
@@ -558,6 +599,20 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
+										} */
+
+										if(!strcmp(symbolType($1), NAME_INT)){
+											if(!strcmp(symbolType($5), NAME_INT)){
+													updateSymbolValInt($1, $3 + symbolValInt($5));
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
+											}
+										}
+										else{
+											perror("Wrong types\n");
+											exit(0);
 										}
 									}
 	| ID S_EQUAL NUM S_ADD NUM		{
@@ -566,7 +621,7 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											exit(0);
 										}
 
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 											case TYPENAME_UNSIGNED_INT:
 												$1 = $3 + $5;
@@ -583,6 +638,14 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
+										} */
+
+										if(!strcmp(symbolType($1), NAME_INT)){
+											updateSymbolValInt($1, symbolValInt($3) + symbolValInt($5));
+										}
+										else{
+											perror("Wrong types\n");
+											exit(0);
 										}
 									}
 	;
@@ -609,7 +672,7 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 												exit(0);
 											}
 
-											switch(typename($1)){
+											/* switch(typename($1)){
 												case TYPENAME_INT:
 													if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
 														if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
@@ -654,6 +717,26 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 													exit(0);
 
 													break;	// Unnecesary, but here it is :)
+											} */
+
+											if(!strcmp(symbolType($1), NAME_INT)){
+												if(!strcmp(symbolType($3), NAME_INT)){
+													if(!strcmp(symbolType($5), NAME_INT)){
+														updateSymbolValInt($1, symbolValInt($3) - symbolValInt($5));
+													}
+													else{
+														perror("Wrong types\n");
+														exit(0);
+													}
+												}
+												else{
+													perror("Wrong types\n");
+													exit(0);
+												}
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
 											}
 										}
 		| ID S_EQUAL ID S_SUB NUM		{
@@ -670,7 +753,7 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 												exit(0);
 											}
 
-											switch(typename($1)){
+											/* switch(typename($1)){
 												case TYPENAME_INT:
 													if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
 														$1 = $3 - $5;
@@ -703,6 +786,20 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 													exit(0);
 
 													break;	// Unnecesary, but here it is :)
+											} */
+
+											if(!strcmp(symbolType($1), NAME_INT)){
+												if(!strcmp(symbolType($3), NAME_INT)){
+													updateSymbolValInt($1, symbolValInt($3) - $5);
+												}
+												else{
+													perror("Wrong types\n");
+													exit(0);
+												}
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
 											}
 										}
 	| ID S_EQUAL NUM S_SUB ID			{
@@ -719,7 +816,7 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 												exit(0);
 											}
 
-											switch(typename($1)){
+											/* switch(typename($1)){
 												case TYPENAME_INT:
 													if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
 														$1 = $3 - $5;
@@ -752,6 +849,20 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 													exit(0);
 
 													break;	// Unnecesary, but here it is :)
+											} */
+
+											if(!strcmp(symbolType($1), NAME_INT)){
+												if(!strcmp(symbolType($5), NAME_INT)){
+													updateSymbolValInt($1, $3 - symbolValInt($5));
+												}
+												else{
+													perror("Wrong types\n");
+													exit(0);
+												}
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
 											}
 										}
 	| ID S_EQUAL NUM S_SUB NUM			{
@@ -760,7 +871,7 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 												exit(0);
 											}
 
-											switch(typename($1)){
+											/* switch(typename($1)){
 												case TYPENAME_INT:
 												case TYPENAME_UNSIGNED_INT:
 													$1 = $3 - $5;
@@ -778,6 +889,14 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 													exit(0);
 
 													break;	// Unnecesary, but here it is :)
+											} */
+
+											if(!strcmp(symbolType($1), NAME_INT)){
+													updateSymbolValInt($1, $3 - $5);
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
 											}
 										}
 	;
@@ -804,7 +923,7 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 														exit(0);
 													}
 
-													switch(typename($1)){
+													/* switch(typename($1)){
 														case TYPENAME_INT:
 															if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
 																if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
@@ -849,6 +968,26 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 															exit(0);
 
 															break;	// Unnecesary, but here it is :)
+													} */
+
+													if(!strcmp(symbolType($1), NAME_INT)){
+														if(!strcmp(symbolType($3), NAME_INT)){
+															if(!strcmp(symbolType($5), NAME_INT)){
+																updateSymbolValInt($1, symbolValInt($3) * symbolValInt($5));
+															}
+															else{
+																perror("Wrong types\n");
+																exit(0);
+															}
+														}
+														else{
+															perror("Wrong types\n");
+															exit(0);
+														}
+													}
+													else{
+														perror("Wrong types\n");
+														exit(0);
 													}
 												}
 	| ID S_EQUAL ID S_ASTERISK NUM				{
@@ -865,7 +1004,7 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 														exit(0);
 													}
 
-													switch(typename($1)){
+													/* switch(typename($1)){
 														case TYPENAME_INT:
 															if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
 																$1 = $3 * $5;
@@ -898,6 +1037,20 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 															exit(0);
 
 															break;	// Unnecesary, but here it is :)
+													} */
+
+													if(!strcmp(symbolType($1), NAME_INT)){
+														if(!strcmp(symbolType($3), NAME_INT)){
+															updateSymbolValInt($1, symbolValInt($3) * $5);
+														}
+														else{
+															perror("Wrong types\n");
+															exit(0);
+														}
+													}
+													else{
+														perror("Wrong types\n");
+														exit(0);
 													}
 												}
 	| ID S_EQUAL NUM S_ASTERISK ID				{
@@ -914,7 +1067,7 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 														exit(0);
 													}
 
-													switch(typename($1)){
+													/* switch(typename($1)){
 														case TYPENAME_INT:
 															if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
 																$1 = $3 * $5;
@@ -947,6 +1100,20 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 															exit(0);
 
 															break;	// Unnecesary, but here it is :)
+													} */
+
+													if(!strcmp(symbolType($1), NAME_INT)){
+														if(!strcmp(symbolType($5), NAME_INT)){
+															updateSymbolValInt($1, $3 * symbolValInt($5));
+														}
+														else{
+															perror("Wrong types\n");
+															exit(0);
+														}
+													}
+													else{
+														perror("Wrong types\n");
+														exit(0);
 													}
 												}
 	| ID S_EQUAL NUM S_ASTERISK NUM				{
@@ -955,7 +1122,7 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 														exit(0);
 													}
 
-													switch(typename($1)){
+													/* switch(typename($1)){
 														case TYPENAME_INT:
 														case TYPENAME_UNSIGNED_INT:
 															$1 = $3 * $5;
@@ -973,6 +1140,14 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 															exit(0);
 
 															break;	// Unnecesary, but here it is :)
+													} */
+
+													if(!strcmp(symbolType($1), NAME_INT)){
+														updateSymbolValInt($1, $3 * $5);
+													}
+													else{
+														perror("Wrong types\n");
+														exit(0);
 													}
 												}
 	;
@@ -999,7 +1174,7 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 											exit(0);
 										}
 
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
 													if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
@@ -1044,6 +1219,26 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
+										} */
+
+										if(!strcmp(symbolType($1), NAME_INT)){
+											if(!strcmp(symbolType($3), NAME_INT)){
+												if(!strcmp(symbolType($5), NAME_INT)){
+													updateSymbolValInt($1, symbolValInt($3) / symbolValInt($5));
+												}
+												else{
+													perror("Wrong types\n");
+													exit(0);
+												}
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
+											}
+										}
+										else{
+											perror("Wrong types\n");
+											exit(0);
 										}
 									}
 	| ID S_EQUAL ID S_DIV NUM		{
@@ -1060,7 +1255,7 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 											exit(0);
 										}
 
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
 													$1 = $3 / $5;
@@ -1093,6 +1288,20 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
+										} */
+
+										if(!strcmp(symbolType($1), NAME_INT)){
+											if(!strcmp(symbolType($3), NAME_INT)){
+												updateSymbolValInt($1, symbolValInt($3) / $5);
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
+											}
+										}
+										else{
+											perror("Wrong types\n");
+											exit(0);
 										}
 									}
 	| ID S_EQUAL NUM S_DIV ID		{
@@ -1109,7 +1318,7 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 											exit(0);
 										}
 
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
 													$1 = $3 / $5;
@@ -1142,6 +1351,20 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
+										} */
+
+										if(!strcmp(symbolType($1), NAME_INT)){
+											if(!strcmp(symbolType($5), NAME_INT)){
+												updateSymbolValInt($1, $3 / symbolValInt($5));
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
+											}
+										}
+										else{
+											perror("Wrong types\n");
+											exit(0);
 										}
 									}
 	| ID S_EQUAL NUM S_DIV NUM		{
@@ -1150,7 +1373,7 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 											exit(0);
 										}
 
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 											case TYPENAME_UNSIGNED_INT:
 												$1 = $3 / $5;
@@ -1168,6 +1391,14 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
+										} */
+
+										if(!strcmp(symbolType($1), NAME_INT)){
+											updateSymbolValInt($1, $3 / $5);
+										}
+										else{
+											perror("Wrong types\n");
+											exit(0);
 										}
 									}
 	;
@@ -1194,7 +1425,7 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 											exit(0);
 										}
 
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
 													if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
@@ -1239,6 +1470,26 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
+										} */
+
+										if(!strcmp(symbolType($1), NAME_INT)){
+											if(!strcmp(symbolType($3), NAME_INT)){
+												if(!strcmp(symbolType($5), NAME_INT)){
+													updateSymbolValInt($1, symbolValInt($3) % symbolValInt($5));
+												}
+												else{
+													perror("Wrong types\n");
+													exit(0);
+												}
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
+											}
+										}
+										else{
+											perror("Wrong types\n");
+											exit(0);
 										}
 									}
 	| ID S_EQUAL ID S_MOD NUM		{
@@ -1256,7 +1507,7 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 										}
 
 
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
 													$1 = $3 % $5;
@@ -1289,6 +1540,20 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
+										} */
+
+										if(!strcmp(symbolType($1), NAME_INT)){
+											if(!strcmp(symbolType($3), NAME_INT)){
+												updateSymbolValInt($1, symbolValInt($3) % $5);
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
+											}
+										}
+										else{
+											perror("Wrong types\n");
+											exit(0);
 										}
 									}
 	| ID S_EQUAL NUM S_MOD ID		{
@@ -1305,7 +1570,7 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 											exit(0);
 										}
 
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 												if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
 													$1 = $3 % $5;
@@ -1338,6 +1603,20 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
+										} */
+
+										if(!strcmp(symbolType($1), NAME_INT)){
+											if(!strcmp(symbolType($5), NAME_INT)){
+												updateSymbolValInt($1, $3 % symbolValInt($5));
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
+											}
+										}
+										else{
+											perror("Wrong types\n");
+											exit(0);
 										}
 									}
 	| ID S_EQUAL NUM S_MOD NUM		{
@@ -1346,7 +1625,7 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 											exit(0);
 										}
 
-										switch(typename($1)){
+										/* switch(typename($1)){
 											case TYPENAME_INT:
 											case TYPENAME_UNSIGNED_INT:
 												$1 = $3 % $5;
@@ -1364,6 +1643,14 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
+										} */
+
+										if(!strcmp(symbolType($1), NAME_INT)){
+													updateSymbolValInt($1, $3 % $5);
+										}
+										else{
+											perror("Wrong types\n");
+											exit(0);
 										}
 									}
 	;
@@ -1387,7 +1674,7 @@ ST_AND: ID CS_AND ID		{
 									exit(0);
 								}
 
-								return $1 && $3;
+								return symbolValInt($1) && symbolValInt($3);
 							}
 	| ID CS_AND BINARY		{
 								if(!variable_is_defined($1)){
@@ -1395,7 +1682,7 @@ ST_AND: ID CS_AND ID		{
 									exit(0);
 								}
 
-								return $1 && $3;
+								return symbolValInt($1) && $3;
 							}
 	| BINARY CS_AND ID		{
 								if(!variable_is_defined($3)){
@@ -1408,7 +1695,7 @@ ST_AND: ID CS_AND ID		{
 									exit(0);
 								}
 
-								return $1 && $3;
+								return $1 && symbolValInt($3);
 							}
 	| BINARY CS_AND BINARY	{$1 && $3;}
 	;
@@ -1429,7 +1716,7 @@ ST_OR: ID CS_OR ID			{
 									exit(0);
 								}
 
-								return $1 || $3;
+								return symbolValInt($1) || symbolValInt($3);
 							}
 	| ID CS_OR BINARY		{
 								if(!variable_is_defined($1)){
@@ -1437,7 +1724,7 @@ ST_OR: ID CS_OR ID			{
 									exit(0);
 								}
 
-								return $1 || $3;
+								return symbolValInt($1) || $3;
 							}
 	| BINARY CS_OR ID		{
 								if(!variable_is_defined($3)){
@@ -1450,7 +1737,7 @@ ST_OR: ID CS_OR ID			{
 									exit(0);
 								}
 
-								return $1 || $3;
+								return $1 || symbolValInt($3);
 							}
 	| BINARY CS_OR BINARY	{$1 || $3;}
 	;
@@ -1471,7 +1758,7 @@ ST_NOT: ID CS_NOT ID		{
 									exit(0);
 								}
 
-								return $1 != $3;
+								return symbolValInt($1) != symbolValInt($3);
 							}
 	| ID CS_NOT BINARY		{
 								if(!variable_is_defined($1)){
@@ -1479,9 +1766,9 @@ ST_NOT: ID CS_NOT ID		{
 									exit(0);
 								}
 
-								return $1 != $3;
+								return symbolValInt($1) != $3;
 							}
-	| ID CS_NOT OP_BINARY	{$1 != $3;}
+	| ID CS_NOT OP_BINARY	{symbolValInt($1) != $3;}
 	;
 
 ST_IF: CS_IF O_BRACKETS CONDITION C_BRACKETS CS_THEN ST1 SEMICOLON CS_ELSE ST1 SEMICOLON
@@ -1511,7 +1798,7 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										
+
 										return $1 == $3;
 									}
 	| ID_NUM CS_GREATER ID_NUM	{
@@ -1524,7 +1811,7 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-										
+
 										return $1 > $3;
 									}
 	| ID_NUM CS_LESS ID_NUM			{
