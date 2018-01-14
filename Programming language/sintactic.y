@@ -4,16 +4,21 @@
 	#include <stdlib.h>
 	#include <string.h>
 
-	void yyerror(const char* msg) {
-    	fprintf(stderr, "%s\n", msg);
+	extern int yylineno;
+
+	void yyerror(char *s) {
+		fprintf(stderr, "line %d: %s\n", yylineno, s);
 	}
 
 	int yylex();
 
-	const int MAX_NUM_VARS_FUNCS = 1024;
-	char vars[MAX_NUM_VARS_FUNCS][256];		// 256 is the maximun lenght of a variable name
-	char funcs[MAX_NUM_VARS_FUNCS][1024];	// 1024 is the maximun lenght of a function signature
-	char vars_initialized[MAX_NUM_VARS_FUNCS][256];
+	const int MAX_NUM_FUNCS = 1024;
+	const int MAX_NUM_VARS = 52;
+	char *vars[MAX_NUM_VARS];		// 52 variables, one for each letter of the alphabet, upper and lower
+	char funcs[MAX_NUM_FUNCS][1024];	// 1024 is the maximun lenght of a function signature
+	char *strings[MAX_NUM_VARS];
+	int nums[MAX_NUM_VARS];
+	char vars_initialized[MAX_NUM_VARS];
 	
 	// For using this the compiler needs -std=C11
 	// gcc -Wall -std=c11 y.tab.c -o language
@@ -27,59 +32,57 @@
 		TYPENAME_OTHER
 	};
 
-	#define typename(x) _Generic((x), char: TYPENAME_STRING, const char: TYPENAME_CONST_STRING, int: TYPENAME_INT, const int: TYPENAME_CONST_INT, unsigned int: TYPENAME_UNSIGNED_INT, const unsigned int: TYPENAME_CONST_UNSIGNED_INT, default: TYPENAME_OTHER)
+	#define typename(x) _Generic((x), char: TYPENAME_STRING, \
+								const char: TYPENAME_CONST_STRING, \
+								int: TYPENAME_INT, \
+								const int: TYPENAME_CONST_INT, \
+								unsigned int: TYPENAME_UNSIGNED_INT, \
+								const unsigned int: TYPENAME_CONST_UNSIGNED_INT, \
+								default: TYPENAME_OTHER)
 
 	#define true (1 == 1)
 	#define false (!true)
 
-	void checkVariable(char *name, int is_initialized){
-		char hash = '#';
+	void checkVariable(char idx, int is_initialized){
+		int bucket = computeSymbolIndex(idx);
 
-		for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
-			if(!strcmp(name, vars[i])){	// This means they have the same name
-				perror("This variable was already declared\n");
-			}
-
-			if(!strcmp(&hash, vars[i])){
-				strcpy(vars[i], name);
-				
-				if(is_initialized){
-					strcpy(vars_initialized[i], name);
-				} //HERE
-				
-				i = MAX_NUM_VARS_FUNCS + 10;	// We don't need more iterations
-			}
+		if(strcmp(vars[bucket], "\0")){	// This means this one already had a type, so it was already declared
+			perror("This variable was already declared\n");
+			printf("Variable affected: %c", idx);
+			exit(0);
+		}
+			
+		if(is_initialized){
+			vars_initialized[bucket] = idx;
 		}
 	}
 
 	void checkFunctionSignature(char *name){
 		char hash = '#';
 
-		for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
+		for(int i = 0; i < MAX_NUM_FUNCS; i++){
 			if(!strcmp(name, funcs[i])){	// This means they have the same name
 				perror("This function was already declared\n");
 			}
 
 			if(!strcmp(&hash, funcs[i])){
 				strcpy(funcs[i], name);
-				i = MAX_NUM_VARS_FUNCS + 10;	// We don't need more iterations
+				break;	// We don't need more iterations
 			}
 		}
 	}
 
-	int variable_is_defined(char *name){
-		for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
-			if(strcmp(name, vars[i])){
-				return true;
-			}
-		}
-	
-		return false;
+	int variable_is_defined(char idx){
+		int bucket = computeSymbolIndex(idx);
+
+		return strcmp(vars[bucket], "\0"); // This means this one already had a type, so it was already declared
 	}
 
-	int variable_is_initialized(char *name){
-		for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
-			if(strcmp(name,vars_initialized[i])){
+	int variable_is_initialized(char idx){
+		int bucket = computeSymbolIndex(idx);
+
+		for(int i = 0; i < MAX_NUM_VARS; i++){
+			if(idx == vars_initialized[bucket]){
 				return true;
 			}
 		}
@@ -95,6 +98,62 @@
 		}
 
 		return false;
+	}
+
+	int computeSymbolIndex(char token){
+		int idx = -1;
+		
+		if(islower(token)) {
+			idx = token - 'a' + 26;
+		}
+		else{
+			if(isupper(token)){
+				idx = token - 'A';
+			}
+		}
+
+		return idx;
+	} 
+
+	/* returns the value of a given symbol */
+	char *symbolType(char symbol){
+		int bucket = computeSymbolIndex(symbol);
+		
+		return vars[bucket];
+	}
+
+	/* returns the value of a given symbol */
+	char *symbolValString(char symbol){
+		int bucket = computeSymbolIndex(symbol);
+		
+		return strings[bucket];
+	}
+
+	/* returns the value of a given symbol */
+	int symbolValInt(char symbol){
+		int bucket = computeSymbolIndex(symbol);
+		
+		return nums[bucket];
+	}
+
+	/* updates the value of a given symbol (numbers) */
+	void updateSymbolValInt(char symbol, int val){
+		int bucket = computeSymbolIndex(symbol);
+		
+		nums[bucket] = val;
+	}
+
+	/* updates the value of a given symbol (strings) */
+	void updateSymbolValString(char symbol, char *val){
+		int bucket = computeSymbolIndex(symbol);
+		
+		strcpy(strings[bucket], val);
+	}
+
+	void declareSymbol(char idx, char *type){
+		int bucket = computeSymbolIndex(symbol);
+
+		strcpy(vars[bucket], type);
 	}
 %}
 
@@ -144,9 +203,20 @@
 %token BINARY
 %token STRING
 
-//%start START
+%start START
 
 %%
+START: BEGIN
+	| FUNCION
+	| DECLARATION_VARIABLES
+	| PRINTING
+	| USER_DEF
+	| ST_IF
+	| ST_WHILE
+	| ST_FOR
+	| STRING_OP
+	;
+
 BEGIN: FUNCIONES;
 
 FUNCIONES: FUNCION_PRINCIPAL
@@ -172,7 +242,9 @@ PARAMETERS: VAR_TYPE ID
 EXPRESIONS: DECLARATION_VARIABLES
 	| CALL_FUNCTIONS
 	| OPERATIONS
-	| EXPRESIONS
+	| EXPRESIONS OPERATIONS
+	| EXPRESIONS CALL_FUNCTIONS
+	| EXPRESIONS DECLARATION_VARIABLES
 	;
 
 DECLARATION_VARIABLES:VARIABLE
@@ -386,7 +458,8 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 												exit(0);
 
 												break;	// Unnecesary, but here it is :)
-										}					}
+										}					
+									}
 
 
 	| ID S_EQUAL ID S_ADD NUM		{
@@ -497,7 +570,6 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											case TYPENAME_INT:
 											case TYPENAME_UNSIGNED_INT:
 												$1 = $3 + $5;
-
 												break;
 											case TYPENAME_STRING:
 												perror("You can't add a number to a string\n");
@@ -1525,8 +1597,8 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 									}
 	;
 
-PRINTING: S_PRINT STRING	{printf("Printing %s\n", $2);}
-	| S_PRINT NUM			{printf("Printing %d\n", $2);}
+PRINTING: S_PRINT STRING '\n'	{printf("Printing %s\n", $2);}
+	| S_PRINT NUM '\n'			{printf("Printing %d\n", $2);}
 	;
 
 STRING_OP: ID S_EQUAL STRING			{
@@ -1650,13 +1722,36 @@ ID_NUM: ID
 	| NUM
 %%
 
-int main(){
-	char hash = '#';
+int main(int argc, char* argv[]){
+	const char HASH = '#';
+	const char EMPTY = '\0';
+	int i;
 
-	for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
-		strcpy(vars[i], &hash);
-		strcpy(funcs[i], &hash);
+	for(i = 0; i < MAX_NUM_FUNCS; i++){
+		//strcpy(vars[i], &HASH);
+		strcpy(funcs[i], &HASH);
 	}
+
+	for(i = 0; i < MAX_NUM_VARS; i++){
+		if((vars[i] = malloc(10)) != NULL){
+			strcpy(vars[i], "\0");
+		}
+		else{
+			perror("Error at malloc\n");
+			exit(0);
+		}
+
+		if((strings[i] = malloc(100)) != NULL){		// At the beginning they all have 100 characters, this can change if needed
+			strcpy(strings[i], "\0");
+		}
+		else{
+			perror("Error at malloc\n");
+		}
+
+		nums[i] = 0;
+	}
+
+	printf("For files already written, use this method --> bin/language < <file with language>\n");
 
 	yyparse();
 }

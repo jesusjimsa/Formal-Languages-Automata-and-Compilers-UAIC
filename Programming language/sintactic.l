@@ -9,6 +9,8 @@ NUMBER [0-9]+
 SBINARY [0-1]+
 LETTER [a-zA-Z]+
 
+%option yylineno
+
 %%
 
 "<"			{return CS_LESS;}
