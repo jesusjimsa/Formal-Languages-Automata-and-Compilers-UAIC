@@ -485,9 +485,15 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											}
 										}
 										else{
-											perror("Wrong types\n");
-											exit(0);
+											if(!strcmp(symbolType($1), NAME_STRING)){
+												updateSymbolValString($1, strcat(symbolValString($3), symbolValString($5)));
+											}
+											else{
+												perror("Wrong types\n");
+												exit(0);
+											}
 										}
+											
 									}
 	| ID S_EQUAL ID S_ADD NUM		{
 										if(!variable_is_defined($1)){
@@ -2028,7 +2034,7 @@ int main(int argc, char* argv[]){
 			exit(0);
 		}
 
-		if((strings[i] = malloc(100)) != NULL){		// At the beginning they all have 100 characters, this can change if needed
+		if((strings[i] = malloc(1000)) != NULL){		// At the beginning they all have 1000 characters, this can change if needed
 			strcpy(strings[i], "\0");
 		}
 		else{
