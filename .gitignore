@@ -218,5 +218,10 @@ xcuserdata/
 /*.gcno
 
 ## Added by me ##
+lex.yy.c
+y.tab.c
+y.tab.h
+y.output
+hola.txt
 
 # End of https://www.gitignore.io/api/c,c++,flex,xcode,macos,visualstudiocode
