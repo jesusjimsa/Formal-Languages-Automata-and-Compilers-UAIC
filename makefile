@@ -22,9 +22,11 @@ frun: $(BIN)/language
 
 clean:
 	echo "Cleaning..."
-	rm $(BIN)/*
+	rm -r $(BIN)/*
 
 mrproper: 
 	rm $(SRC)/y.tab.c
+	rm $(SRC)/y.tab.h
+	rm $(SRC)/y.output
 	rm $(SRC)/lex.yy.c
 	rm -r $(BIN)/*
