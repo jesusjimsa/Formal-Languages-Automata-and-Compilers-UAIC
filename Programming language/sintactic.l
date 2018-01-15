@@ -3,11 +3,15 @@
 	#include <stdlib.h>
 	#include <string.h>
 	#include "y.tab.h"
+
+	int i;
 %}
 
 NUMBER [0-9]+
-SBINARY [0-1]+
-LETTER [a-zA-Z]+
+SBINARY 0|1
+LETTER [a-zA-Z]
+WORD [a-zA-Z]+
+SPACE [ ]*
 
 %option yylineno
 
@@ -58,8 +62,36 @@ LETTER [a-zA-Z]+
 
 "exit"|"quit"|"bye"	{printf("Closing program\n"); exit(0);}
 
-{NUMBER}			{return NUM;}
-{LETTER}			{return ID;}
-"\""{LETTER}"\""	{return STRING;}
+{NUMBER}					{yylval.num = atoi(yytext); return NUM;}
+{SPACE}{LETTER}{SPACE}		{
+								for(i = 0; i < strlen(yytext); i++){
+									if(yytext[i] != ' '){	// The blank space character
+										yylval.id = yytext[i];
+										return ID;
+									}
+								}
+							}
+{WORD}						{
+								if((yylval.string = malloc(strlen(yytext) * 2)) != NULL){	// Twice, just in case
+									strcpy(yylval.string, yytext);
+									return FUNC_NAME;
+								}
+								else{
+									perror("Error in malloc\n");
+									exit(0);
+								}
+							}
+"\""{SPACE}{WORD}{SPACE}"\""				{
+								if((yylval.string = malloc(strlen(yytext) * 2)) != NULL){	// Twice, just in case
+									strcpy(yylval.string, yytext);
+									return STRING;
+								}
+								else{
+									perror("Error in malloc\n");
+									exit(0);
+								}
+							}
+
+[\n\t]	;	// Ignores line breaks
 
 %%

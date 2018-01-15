@@ -3,6 +3,7 @@
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>
+	#include <ctype.h>
 
 	extern int yylineno;
 
@@ -46,12 +47,27 @@
 	#define true (1 == 1)
 	#define false (!true)
 
+	int computeSymbolIndex(char token){
+		int idx = -1;
+
+		if(islower(token)) {
+			idx = token - 'a' + 26;
+		}
+		else{
+			if(isupper(token)){
+				idx = token - 'A';
+			}
+		}
+
+		return idx;
+	}
+
 	void checkVariable(char idx, int is_initialized){
 		int bucket = computeSymbolIndex(idx);
 
 		if(strcmp(vars[bucket], "\0")){	// This means this one already had a type, so it was already declared
 			perror("This variable was already declared\n");
-			printf("Variable affected: %c", idx);
+			printf("Variable affected: %c\n", idx);
 			exit(0);
 		}
 
@@ -94,28 +110,13 @@
 	}
 
 	int function_is_defined(char *name){
-		for(int i = 0; i < MAX_NUM_VARS_FUNCS; i++){
+		for(int i = 0; i < MAX_NUM_FUNCS; i++){
 			if(strcmp(name,funcs[i])){
 				return true;
 			}
 		}
 
 		return false;
-	}
-
-	int computeSymbolIndex(char token){
-		int idx = -1;
-
-		if(islower(token)) {
-			idx = token - 'a' + 26;
-		}
-		else{
-			if(isupper(token)){
-				idx = token - 'A';
-			}
-		}
-
-		return idx;
 	}
 
 	/* returns the value of a given symbol */
@@ -153,12 +154,20 @@
 		strcpy(strings[bucket], val);
 	}
 
-	void declareSymbol(char idx, char *type){
-		int bucket = computeSymbolIndex(symbol);
+	void declareSymbol(char idx, const char *type){
+		int bucket = computeSymbolIndex(idx);
 
 		strcpy(vars[bucket], type);
 	}
 %}
+
+%union {int num; char id; char *string; int bool;}
+%type <bool>CONDITION
+%type <bool>ST_AND
+%type <bool>ST_OR
+%type <bool>ST_NOT
+%type <bool>OP_BINARY
+%type <string>SIGNATURE
 
 // Characters
 %token O_BRACKETS	C_BRACKETS
@@ -178,9 +187,9 @@
 
 
 // Types and functions
-%token S_INTEGER
-%token S_CHAR
-%token S_UNSIGNED
+%token <num>S_INTEGER
+%token <id>S_CHAR
+%token <num>S_UNSIGNED
 %token S_VARIABLE
 %token S_PARAMETER
 %token S_CONSTANT
@@ -201,10 +210,11 @@
 %token S_PRINT
 
 // Others
-%token NUM
-%token ID
-%token BINARY
-%token STRING
+%token <num>NUM
+%token <id>ID
+%token <string>FUNC_NAME
+%token <bool>BINARY
+%token <string>STRING
 
 %start START
 
@@ -212,12 +222,23 @@
 START: BEGIN
 	| FUNCION
 	| DECLARATION_VARIABLES
+	| OPERATIONS
 	| PRINTING
 	| USER_DEF
 	| ST_IF
 	| ST_WHILE
 	| ST_FOR
 	| STRING_OP
+	| BEGIN START
+	| FUNCION START
+	| DECLARATION_VARIABLES START
+	| OPERATIONS START
+	| PRINTING START
+	| USER_DEF START
+	| ST_IF START
+	| ST_WHILE START
+	| ST_FOR START
+	| STRING_OP START
 	;
 
 BEGIN: FUNCIONES;
@@ -232,8 +253,8 @@ FUNCION_PRINCIPAL: S_PRINCIPAL O_CURLY EXPRESIONS C_CURLY
 
 FUNCION: S_DEFFUNCTION SIGNATURE O_CURLY EXPRESIONS C_CURLY		{checkFunctionSignature($2);};
 
-SIGNATURE: ID O_BRACKETS C_BRACKETS
-	| ID O_BRACKETS PARAMETERS C_BRACKETS
+SIGNATURE: FUNC_NAME O_BRACKETS C_BRACKETS
+	| FUNC_NAME O_BRACKETS PARAMETERS C_BRACKETS
 	;
 
 PARAMETERS: VAR_TYPE ID
@@ -254,14 +275,14 @@ DECLARATION_VARIABLES:VARIABLE
 	| VARIABLE DECLARATION_VARIABLES
 	;
 
-VARIABLE: INT ID S_EQUAL NUM					{checkVariable($2, true); declareSymbol($2, NAME_INT); updateSymbolValInt($2, $4);}
-	| CHAR ID S_EQUAL STRING					{checkVariable($2, true); declareSymbol($2, NAME_STRING); updateSymbolValString($2, $4);}
-	| INT ID									{checkVariable($2, false); declareSymbol($2, NAME_INT);}
-	| CHAR ID									{checkVariable($2, false); declareSymbol($2, NAME_STRING);}
-	| INT ID S_COMMA VARIABLE					{checkVariable($2, false); declareSymbol($2, NAME_INT);}
-	| CHAR ID S_COMMA VARIABLE					{checkVariable($2, false); declareSymbol($2, NAME_STRING);}
-	| INT ID S_EQUAL NUM S_COMMA VARIABLE		{checkVariable($2, true); declareSymbol($2, NAME_INT); updateSymbolValInt($2, $4);}
-	| CHAR ID S_EQUAL STRING S_COMMA VARIABLE	{checkVariable($2, true); declareSymbol($2, NAME_STRING); updateSymbolValString($2, $4);}
+VARIABLE: INT ID S_EQUAL NUM SEMICOLON					{checkVariable($2, true); declareSymbol($2, NAME_INT); updateSymbolValInt($2, $4);}
+	| CHAR ID S_EQUAL STRING SEMICOLON					{checkVariable($2, true); declareSymbol($2, NAME_STRING); updateSymbolValString($2, $4);}
+	| INT ID SEMICOLON									{checkVariable($2, false); declareSymbol($2, NAME_INT);}
+	| CHAR ID SEMICOLON									{checkVariable($2, false); declareSymbol($2, NAME_STRING);}
+	| INT ID S_COMMA VARIABLE SEMICOLON					{checkVariable($2, false); declareSymbol($2, NAME_INT);}
+	| CHAR ID S_COMMA VARIABLE SEMICOLON				{checkVariable($2, false); declareSymbol($2, NAME_STRING);}
+	| INT ID S_EQUAL NUM S_COMMA VARIABLE SEMICOLON		{checkVariable($2, true); declareSymbol($2, NAME_INT); updateSymbolValInt($2, $4);}
+	| CHAR ID S_EQUAL STRING S_COMMA VARIABLE SEMICOLON	{checkVariable($2, true); declareSymbol($2, NAME_STRING); updateSymbolValString($2, $4);}
 	| VAR_TYPE ID O_SQUAREB NUM C_SQUAREB		{/* checkVariable($2, true); */}
 	| VAR_TYPE ID O_SQUAREB C_SQUAREB			{/* checkVariable($2, true); */}
 	;
@@ -290,18 +311,18 @@ CALL_FUNCTIONS: S_VARIABLE ID S_EQUAL FUNCTION_DEFINITION
 	| FUNCTION_DEFINITION
 	;
 
-FUNCTION_DEFINITION:ID O_BRACKETS C_BRACKETS  			{
-															if(!function_is_defined($1)){
-																perror("The function was not declared\n");
-																exit(0);
-															}
-														}
-	| ID O_BRACKETS PARAMETERS_WDECLARATION C_BRACKETS {
-															if(!function_is_defined($1)){
-																perror("The function was not declared\n");
-																exit(0);
-															}
-														}
+FUNCTION_DEFINITION:FUNC_NAME O_BRACKETS C_BRACKETS  			{
+																	if(!function_is_defined($1)){
+																		perror("The function was not declared\n");
+																		exit(0);
+																	}
+																}
+	| FUNC_NAME O_BRACKETS PARAMETERS_WDECLARATION C_BRACKETS 	{
+																	if(!function_is_defined($1)){
+																		perror("The function was not declared\n");
+																		exit(0);
+																	}
+																}
 	;
 
 PARAMETERS_WDECLARATION: ID S_COMMA PARAMETERS_WDECLARATION
@@ -310,82 +331,86 @@ PARAMETERS_WDECLARATION: ID S_COMMA PARAMETERS_WDECLARATION
 	| S_DEFINITION
 	;
 
-OPERATIONS: ID S_EQUAL NUM			{
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-												$1 = $3;
+OPERATIONS: ID S_EQUAL NUM SEMICOLON			{
+													/* switch(typename($1)){
+														case TYPENAME_INT:
+															$1 = $3;
 
-												break;
-											case TYPENAME_UNSIGNED_INT:
-												if($3 > 0){
-													$1 = $3;
+															break;
+														case TYPENAME_UNSIGNED_INT:
+															if($3 > 0){
+																$1 = $3;
+															}
+															else{
+																perror("You are trying to assign a negative number to an unsigned integer\n");
+																exit(0);
+															}
+
+															break;
+														case TYPENAME_CONST_INT:
+														case TYPENAME_CONST_UNSIGNED_INT:
+															perror("You can't change the value of a constant!\n");
+															exit(0);
+
+															break;
+													} */
+													if(!variable_is_defined($1)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+													
+													updateSymbolValInt($1, $3);
 												}
-												else{
-													perror("You are trying to assign a negative number to an unsigned integer\n");
+	| ID S_EQUAL ID S_INCREMENTO SEMICOLON	{
+												if(!variable_is_defined($3)){
+													perror("The variable was not declared\n");
+													exit(0);
+												}
+												if(!variable_is_initialized($3)){
+													perror("The variable was not initialized\n");
 													exit(0);
 												}
 
-												break;
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
+												// $1 = $3 + 1;
+												updateSymbolValInt($1, symbolValInt($3) + 1);
+											}
+	| ID S_EQUAL ID S_DECREMENTO SEMICOLON	{
+												if(!variable_is_defined($3)){
+													perror("The variable was not declared\n");
+													exit(0);
+												}
+												if(!variable_is_initialized($3)){
+													perror("The variable was not initialized\n");
+													exit(0);
+												}
 
-												break;
-										} */
+												// $1 = $3 - 1;
+												updateSymbolValInt($1, symbolValInt($3) - 1);
+											}
+	| ID S_INCREMENTO SEMICOLON				{
+												if(!variable_is_defined($1)){
+													perror("The variable was not declared\n");
+													exit(0);
+												}
 
-										updateSymbolValInt($1, $3);
-									}
-	| ID S_EQUAL ID S_INCREMENTO	{
-										if(!variable_is_defined($3)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-										if(!variable_is_initialized($3)){
-											perror("The variable was not initialized\n");
-											exit(0);
-										}
+												// $1 = $1 + 1;
+												updateSymbolValInt($1, symbolValInt($1) + 1);
+											}
+	| ID S_DECREMENTO SEMICOLON				{
+												if(!variable_is_defined($1)){
+													perror("The variable was not declared\n");
+													exit(0);
+												}
 
-										// $1 = $3 + 1;
-										updateSymbolValInt($1, symbolValInt($3) + 1);
-									}
-	| ID S_EQUAL ID S_DECREMENTO	{
-										if(!variable_is_defined($3)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-										if(!variable_is_initialized($3)){
-											perror("The variable was not initialized\n");
-											exit(0);
-										}
-
-										// $1 = $3 - 1;
-										updateSymbolValInt($1, symbolValInt($3) - 1);
-									}
-	| ID S_INCREMENTO				{
-										if(!variable_is_defined($1)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
-										// $1 = $1 + 1;
-										updateSymbolValInt($1, symbolValInt($1) + 1);
-									}
-	| ID S_DECREMENTO				{
-										if(!variable_is_defined($1)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
-										// $1 = $1 - 1;
-										updateSymbolValInt($1, symbolValInt($1) - 1);
-									}
-	| ST_PLUS
-	| ST_SUBSTRACTION
-	| ST_MULTIPLICATION
-	| ST_DIVISION
-	| ST_MODULE
-	| OP_BINARY
+												// $1 = $1 - 1;
+												updateSymbolValInt($1, symbolValInt($1) - 1);
+											}
+	| ST_PLUS SEMICOLON
+	| ST_SUBSTRACTION SEMICOLON
+	| ST_MULTIPLICATION SEMICOLON
+	| ST_DIVISION SEMICOLON
+	| ST_MODULE SEMICOLON
+	| OP_BINARY SEMICOLON
 	;
 
 ST_PLUS: ID S_EQUAL ID S_ADD ID		{
@@ -493,7 +518,7 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 												exit(0);
 											}
 										}
-											
+
 									}
 	| ID S_EQUAL ID S_ADD NUM		{
 										if(!variable_is_defined($1)){
@@ -1703,7 +1728,7 @@ ST_AND: ID CS_AND ID		{
 
 								return $1 && symbolValInt($3);
 							}
-	| BINARY CS_AND BINARY	{$1 && $3;}
+	| BINARY CS_AND BINARY	{return $1 && $3;}
 	;
 
 ST_OR: ID CS_OR ID			{
@@ -1745,7 +1770,7 @@ ST_OR: ID CS_OR ID			{
 
 								return $1 || symbolValInt($3);
 							}
-	| BINARY CS_OR BINARY	{$1 || $3;}
+	| BINARY CS_OR BINARY	{return $1 || $3;}
 	;
 
 ST_NOT: ID CS_NOT ID		{
@@ -1774,7 +1799,7 @@ ST_NOT: ID CS_NOT ID		{
 
 								return symbolValInt($1) != $3;
 							}
-	| ID CS_NOT OP_BINARY	{symbolValInt($1) != $3;}
+	| ID CS_NOT OP_BINARY	{return symbolValInt($1) != $3;}
 	;
 
 ST_IF: CS_IF O_BRACKETS CONDITION C_BRACKETS CS_THEN ST1 SEMICOLON CS_ELSE ST1 SEMICOLON
@@ -1794,7 +1819,46 @@ ST1: ST_IF
 	| OPERATIONS
 	;
 
-CONDITION: ID_NUM CS_EQUAL ID_NUM	{
+CONDITION: ID CS_EQUAL ID			{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return symbolValInt($1) == symbolValInt($3);
+									}
+	| ID CS_EQUAL NUM				{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return symbolValInt($1) == $3;
+									}
+	| NUM CS_EQUAL ID				{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return $1 == symbolValInt($3);
+									}
+	| NUM CS_EQUAL NUM				{
 										if(!variable_is_defined($1)){
 											perror("The variable was not declared\n");
 											exit(0);
@@ -1807,7 +1871,46 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 
 										return $1 == $3;
 									}
-	| ID_NUM CS_GREATER ID_NUM	{
+	| ID CS_GREATER ID				{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return symbolValInt($1) > symbolValInt($3);
+									}
+	| ID CS_GREATER NUM				{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return symbolValInt($1) > $3;
+									}
+	| NUM CS_GREATER ID				{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return $1 > symbolValInt($3);
+									}
+	| NUM CS_GREATER NUM			{
 										if(!variable_is_defined($1)){
 											perror("The variable was not declared\n");
 											exit(0);
@@ -1820,7 +1923,46 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 
 										return $1 > $3;
 									}
-	| ID_NUM CS_LESS ID_NUM			{
+	| ID CS_LESS ID					{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return symbolValInt($1) < symbolValInt($3);
+									}
+	| ID CS_LESS NUM				{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return symbolValInt($1) < $3;
+									}
+	| NUM CS_LESS ID				{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return $1 < symbolValInt($3);
+									}
+	| NUM CS_LESS NUM				{
 										if(!variable_is_defined($1)){
 											perror("The variable was not declared\n");
 											exit(0);
@@ -1833,7 +1975,46 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 
 										return $1 < $3;
 									}
-	| ID_NUM CS_DIFFERENT ID_NUM	{
+	| ID CS_DIFFERENT ID	{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return symbolValInt($1) != symbolValInt($3);
+									}
+	| ID CS_DIFFERENT NUM			{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return symbolValInt($1) != $3;
+									}
+	| NUM CS_DIFFERENT ID			{
+										if(!variable_is_defined($1)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										if(!variable_is_defined($3)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return $1 != symbolValInt($3);
+									}
+	| NUM CS_DIFFERENT NUM			{
 										if(!variable_is_defined($1)){
 											perror("The variable was not declared\n");
 											exit(0);
@@ -1873,14 +2054,22 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 										return $1 || $3;
 									}
 	| CS_NOT CONDITION				{
+										if(!variable_is_defined($2)){
+											perror("The variable was not declared\n");
+											exit(0);
+										}
+
+										return !$2;
+									}
+	| ID						{
 										if(!variable_is_defined($1)){
 											perror("The variable was not declared\n");
 											exit(0);
 										}
 
-										return !$1;
+										return symbolValInt($1);
 									}
-	| ID_NUM						{
+	| NUM						{
 										if(!variable_is_defined($1)){
 											perror("The variable was not declared\n");
 											exit(0);
@@ -1888,121 +2077,168 @@ CONDITION: ID_NUM CS_EQUAL ID_NUM	{
 
 										return $1;
 									}
+
 	;
 
-PRINTING: S_PRINT STRING '\n'	{printf("Printing %s\n", $2);}
-	| S_PRINT NUM '\n'			{printf("Printing %d\n", $2);}
+PRINTING: S_PRINT STRING SEMICOLON	{printf("Printing %s\n", $2);}
+	| S_PRINT NUM SEMICOLON			{printf("Printing %d\n", $2);}
+	| S_PRINT ID SEMICOLON			{
+										if(!strcmp(symbolType($2), NAME_INT)){
+											printf("Printing %d\n", symbolValInt($2));
+										}
+										else{
+											if(!strcmp(symbolType($2), NAME_STRING)){
+												printf("Printing %s\n", symbolValString($2));
+											}
+											else{
+												perror("Variable not declared\n");
+												exit(0);
+											}
+										}
+									}
 	;
 
-STRING_OP: ID S_EQUAL STRING			{
-											if(!variable_is_defined($1)){
-												perror("The variable was not declared\n");
-												exit(0);
-											}
-
-											switch(typename($1)){
-												case TYPENAME_STRING:
-													$1 = $3;
-
-													break;
-												case TYPENAME_CONST_STRING:
-													perror("You can't change the value of a constant!\n");
-													exit(0);
-
-													break;
-												default:
-													perror("You can't assign a string to this type of data\n");
-													exit(0);
-											}
-										}
-	| ID S_EQUAL STRING S_ADD STRING	{
-											if(!variable_is_defined($1)){
-												perror("The variable was not declared\n");
-												exit(0);
-											}
-
-											switch(typename($1)){
-												case TYPENAME_STRING:
-													$1 = $3;
-													strcat($1, $5);
-
-													break;
-												case TYPENAME_CONST_STRING:
-													perror("You can't change the value of a constant!\n");
-													exit(0);
-
-													break;
-												default:
-													perror("You can't assign a string to this type of data\n");
-													exit(0);
-											}
-										}
-	| ID S_EQUAL ID S_ADD STRING		{
-											if(!variable_is_defined($1)){
-												perror("The variable was not declared\n");
-												exit(0);
-											}
-
-											if(!variable_is_defined($3)){
-												perror("The variable was not declared\n");
-												exit(0);
-											}
-
-											switch(typename($1)){
-												case TYPENAME_STRING:
-													if(typename($3) == TYPENAME_STRING || typename($3) == TYPENAME_CONST_STRING){
-														$1 = $3;
-														strcat($1, $5);
-													}
-													else{
-														perror("There has been a problem with variables, revise the types\n");
+STRING_OP: ID S_EQUAL STRING SEMICOLON			{
+													if(!variable_is_defined($1)){
+														perror("The variable was not declared\n");
 														exit(0);
 													}
 
-													break;
-												case TYPENAME_CONST_STRING:
-													perror("You can't change the value of a constant!\n");
-													exit(0);
+													/* switch(typename($1)){
+														case TYPENAME_STRING:
+															$1 = $3;
 
-													break;
-												default:
-													perror("You can't assign a string to this type of data\n");
-													exit(0);
-											}
-										}
-	| ID S_EQUAL STRING S_ADD ID		{
-											if(!variable_is_defined($1)){
-												perror("The variable was not declared\n");
-												exit(0);
-											}
+															break;
+														case TYPENAME_CONST_STRING:
+															perror("You can't change the value of a constant!\n");
+															exit(0);
 
-											if(!variable_is_defined($5)){
-												perror("The variable was not declared\n");
-												exit(0);
-											}
+															break;
+														default:
+															perror("You can't assign a string to this type of data\n");
+															exit(0);
+													} */
 
-											switch(typename($1)){
-												case TYPENAME_STRING:
-													if(typename($5) == TYPENAME_STRING || typename($5) == TYPENAME_CONST_STRING){
-														$1 = $3;
-														strcat($1, $5);
+													if(!strcmp(symbolType($1), NAME_STRING)){
+														updateSymbolValString($1, $3);
 													}
 													else{
-														perror("There has been a problem with variables, revise the types\n");
+														perror("Wrong types\n");
+														exit(0);
+													}
+												}
+	| ID S_EQUAL STRING S_ADD STRING SEMICOLON	{
+													if(!variable_is_defined($1)){
+														perror("The variable was not declared\n");
 														exit(0);
 													}
 
-													break;
-												case TYPENAME_CONST_STRING:
-													perror("You can't change the value of a constant!\n");
-													exit(0);
+													/* switch(typename($1)){
+														case TYPENAME_STRING:
+															$1 = $3;
+															strcat($1, $5);
 
-													break;
-												default:
-													perror("You can't assign a string to this type of data\n");
-													exit(0);
-											}
-										}
+															break;
+														case TYPENAME_CONST_STRING:
+															perror("You can't change the value of a constant!\n");
+															exit(0);
+
+															break;
+														default:
+															perror("You can't assign a string to this type of data\n");
+															exit(0);
+													} */
+
+													if(!strcmp(symbolType($1), NAME_STRING)){
+														updateSymbolValString($1, strcat($3, $5));
+													}
+													else{
+														perror("Wrong types\n");
+														exit(0);
+													}
+												}
+	| ID S_EQUAL ID S_ADD STRING SEMICOLON		{
+													if(!variable_is_defined($1)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+
+													if(!variable_is_defined($3)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+
+													/* switch(typename($1)){
+														case TYPENAME_STRING:
+															if(typename($3) == TYPENAME_STRING || typename($3) == TYPENAME_CONST_STRING){
+																$1 = $3;
+																strcat($1, $5);
+															}
+															else{
+																perror("There has been a problem with variables, revise the types\n");
+																exit(0);
+															}
+
+															break;
+														case TYPENAME_CONST_STRING:
+															perror("You can't change the value of a constant!\n");
+															exit(0);
+
+															break;
+														default:
+															perror("You can't assign a string to this type of data\n");
+															exit(0);
+													} */
+
+													if(!strcmp(symbolType($1), NAME_STRING)){
+														updateSymbolValString($1, strcat(symbolValString($3), $5));
+													}
+													else{
+														perror("Wrong types\n");
+														exit(0);
+													}
+												}
+	| ID S_EQUAL STRING S_ADD ID SEMICOLON		{
+													if(!variable_is_defined($1)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+
+													if(!variable_is_defined($5)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+
+													/* switch(typename($1)){
+														case TYPENAME_STRING:
+															if(typename($5) == TYPENAME_STRING || typename($5) == TYPENAME_CONST_STRING){
+																$1 = $3;
+																strcat($1, $5);
+															}
+															else{
+																perror("There has been a problem with variables, revise the types\n");
+																exit(0);
+															}
+
+															break;
+														case TYPENAME_CONST_STRING:
+															perror("You can't change the value of a constant!\n");
+															exit(0);
+
+															break;
+														default:
+															perror("You can't assign a string to this type of data\n");
+															exit(0);
+													} */
+
+													if(!strcmp(symbolType($1), NAME_STRING)){
+														updateSymbolValString($1, strcat($3, symbolValString($5)));
+													}
+													else{
+														perror("Wrong types\n");
+														exit(0);
+													}
+												}
 	;
 
 USER_DEF: S_STRUCT ID O_CURLY DATA C_CURLY;
@@ -2017,7 +2253,7 @@ ID_NUM: ID
 
 int main(int argc, char* argv[]){
 	const char HASH = '#';
-	const char EMPTY = '\0';
+	const char *EMPTY = "\0";
 	int i;
 
 	for(i = 0; i < MAX_NUM_FUNCS; i++){
@@ -2027,7 +2263,7 @@ int main(int argc, char* argv[]){
 
 	for(i = 0; i < MAX_NUM_VARS; i++){
 		if((vars[i] = malloc(10)) != NULL){
-			strcpy(vars[i], "\0");
+			strcpy(vars[i], EMPTY);
 		}
 		else{
 			perror("Error at malloc\n");
@@ -2035,7 +2271,7 @@ int main(int argc, char* argv[]){
 		}
 
 		if((strings[i] = malloc(1000)) != NULL){		// At the beginning they all have 1000 characters, this can change if needed
-			strcpy(strings[i], "\0");
+			strcpy(strings[i], EMPTY);
 		}
 		else{
 			perror("Error at malloc\n");
@@ -2045,6 +2281,7 @@ int main(int argc, char* argv[]){
 	}
 
 	printf("For files already written, use this method --> bin/language < <file with language>\n");
+	printf("\n––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––\n\n");
 
 	yyparse();
 }
