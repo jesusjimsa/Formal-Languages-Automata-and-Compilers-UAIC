@@ -17,7 +17,7 @@ compiler: $(SRC)/sintactic.y
 run: language #
 	$(BIN)/language
 
-fast_run: $(BIN)/language
+frun: $(BIN)/language
 	$(BIN)/language
 
 clean:
