@@ -83,8 +83,9 @@
      S_PRINT = 299,
      NUM = 300,
      ID = 301,
-     BINARY = 302,
-     STRING = 303
+     FUNC_NAME = 302,
+     BINARY = 303,
+     STRING = 304
    };
 #endif
 /* Tokens.  */
@@ -132,14 +133,20 @@
 #define S_PRINT 299
 #define NUM 300
 #define ID 301
-#define BINARY 302
-#define STRING 303
+#define FUNC_NAME 302
+#define BINARY 303
+#define STRING 304
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef int YYSTYPE;
+typedef union YYSTYPE
+#line 164 "Programming language/sintactic.y"
+{int num; char id; char *string; int bool;}
+/* Line 1529 of yacc.c.  */
+#line 149 "Programming language/y.tab.h"
+	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
