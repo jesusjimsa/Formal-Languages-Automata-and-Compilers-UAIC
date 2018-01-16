@@ -11,6 +11,7 @@ NUMBER [0-9]+
 SBINARY 0|1
 LETTER [a-zA-Z]
 WORD [a-zA-Z]+
+STRING_CONTENT (.*?)
 SPACE [ ]*
 
 %option yylineno
@@ -58,7 +59,7 @@ SPACE [ ]*
 "struct"	{return S_STRUCT;}
 "print"		{return S_PRINT;}
 
-"True"|"False"|{SBINARY}	 			{return BINARY;}
+"true"|"false"|{SBINARY}	 			{return BINARY;}
 
 "exit"|"quit"|"bye"	{printf("Closing program\n"); exit(0);}
 
@@ -81,7 +82,7 @@ SPACE [ ]*
 									exit(0);
 								}
 							}
-"\""{SPACE}{WORD}{SPACE}"\""				{
+"\""{STRING_CONTENT}"\""	{
 								if((yylval.string = malloc(strlen(yytext) * 2)) != NULL){	// Twice, just in case
 									strcpy(yylval.string, yytext);
 									return STRING;
