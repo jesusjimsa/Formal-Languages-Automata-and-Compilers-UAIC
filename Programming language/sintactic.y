@@ -276,6 +276,49 @@ DECLARATION_VARIABLES:VARIABLE
 	;
 
 VARIABLE: INT ID S_EQUAL NUM SEMICOLON					{checkVariable($2, true); declareSymbol($2, NAME_INT); updateSymbolValInt($2, $4);}
+	| INT ID S_EQUAL NUM S_ADD NUM SEMICOLON			{checkVariable($2, true); declareSymbol($2, NAME_INT); updateSymbolValInt($2, $4 + $6);}
+	| INT ID S_EQUAL ID S_ADD NUM SEMICOLON			{
+															checkVariable($2, true);
+															declareSymbol($2, NAME_INT);
+															
+															if(!strcmp(symbolType($4), NAME_INT)){
+																updateSymbolValInt($2, symbolValInt($4) + $6);
+															}
+															else{
+																printf("%c is not a number\n", $4);
+																exit(0);
+															}
+														}
+	| INT ID S_EQUAL NUM S_ADD ID SEMICOLON			{
+															checkVariable($2, true);
+															declareSymbol($2, NAME_INT);
+															
+															if(!strcmp(symbolType($6), NAME_INT)){
+																updateSymbolValInt($2, $4 + symbolValInt($6));
+															}
+															else{
+																printf("%c is not a number\n", $6);
+																exit(0);
+															}
+														}
+	| INT ID S_EQUAL ID S_ADD ID SEMICOLON			{
+															checkVariable($2, true);
+															declareSymbol($2, NAME_INT);
+															
+															if(!strcmp(symbolType($4), NAME_INT)){
+																if(!strcmp(symbolType($4), NAME_INT)){
+																	updateSymbolValInt($2, symbolValInt($4) + symbolValInt($6));
+																}
+																else{
+																	printf("%c is not a number\n", $6);
+																	exit(0);
+																}
+															}
+															else{
+																printf("%c is not a number\n", $4);
+																exit(0);
+															}
+														}
 	| CHAR ID S_EQUAL STRING SEMICOLON					{checkVariable($2, true); declareSymbol($2, NAME_STRING); updateSymbolValString($2, $4);}
 	| INT ID SEMICOLON									{checkVariable($2, false); declareSymbol($2, NAME_INT);}
 	| CHAR ID SEMICOLON									{checkVariable($2, false); declareSymbol($2, NAME_STRING);}
@@ -283,8 +326,8 @@ VARIABLE: INT ID S_EQUAL NUM SEMICOLON					{checkVariable($2, true); declareSymb
 	| CHAR ID S_COMMA VARIABLE SEMICOLON				{checkVariable($2, false); declareSymbol($2, NAME_STRING);}
 	| INT ID S_EQUAL NUM S_COMMA VARIABLE SEMICOLON		{checkVariable($2, true); declareSymbol($2, NAME_INT); updateSymbolValInt($2, $4);}
 	| CHAR ID S_EQUAL STRING S_COMMA VARIABLE SEMICOLON	{checkVariable($2, true); declareSymbol($2, NAME_STRING); updateSymbolValString($2, $4);}
-	| VAR_TYPE ID O_SQUAREB NUM C_SQUAREB		{/* checkVariable($2, true); */}
-	| VAR_TYPE ID O_SQUAREB C_SQUAREB			{/* checkVariable($2, true); */}
+	| INT ID O_SQUAREB NUM C_SQUAREB SEMICOLON		{/* checkVariable($2, true); */ printf("si\n");}
+	| VAR_TYPE ID O_SQUAREB C_SQUAREB SEMICOLON			{/* checkVariable($2, true); */}
 	;
 
 VAR_TYPE: INT
@@ -332,33 +375,11 @@ PARAMETERS_WDECLARATION: ID S_COMMA PARAMETERS_WDECLARATION
 	;
 
 OPERATIONS: ID S_EQUAL NUM SEMICOLON			{
-													/* switch(typename($1)){
-														case TYPENAME_INT:
-															$1 = $3;
-
-															break;
-														case TYPENAME_UNSIGNED_INT:
-															if($3 > 0){
-																$1 = $3;
-															}
-															else{
-																perror("You are trying to assign a negative number to an unsigned integer\n");
-																exit(0);
-															}
-
-															break;
-														case TYPENAME_CONST_INT:
-														case TYPENAME_CONST_UNSIGNED_INT:
-															perror("You can't change the value of a constant!\n");
-															exit(0);
-
-															break;
-													} */
 													if(!variable_is_defined($1)){
 														perror("The variable was not declared\n");
 														exit(0);
 													}
-													
+
 													updateSymbolValInt($1, $3);
 												}
 	| ID S_EQUAL ID S_INCREMENTO SEMICOLON	{
@@ -371,7 +392,6 @@ OPERATIONS: ID S_EQUAL NUM SEMICOLON			{
 													exit(0);
 												}
 
-												// $1 = $3 + 1;
 												updateSymbolValInt($1, symbolValInt($3) + 1);
 											}
 	| ID S_EQUAL ID S_DECREMENTO SEMICOLON	{
@@ -384,7 +404,6 @@ OPERATIONS: ID S_EQUAL NUM SEMICOLON			{
 													exit(0);
 												}
 
-												// $1 = $3 - 1;
 												updateSymbolValInt($1, symbolValInt($3) - 1);
 											}
 	| ID S_INCREMENTO SEMICOLON				{
@@ -393,7 +412,6 @@ OPERATIONS: ID S_EQUAL NUM SEMICOLON			{
 													exit(0);
 												}
 
-												// $1 = $1 + 1;
 												updateSymbolValInt($1, symbolValInt($1) + 1);
 											}
 	| ID S_DECREMENTO SEMICOLON				{
@@ -402,7 +420,6 @@ OPERATIONS: ID S_EQUAL NUM SEMICOLON			{
 													exit(0);
 												}
 
-												// $1 = $1 - 1;
 												updateSymbolValInt($1, symbolValInt($1) - 1);
 											}
 	| ST_PLUS SEMICOLON
@@ -434,65 +451,6 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
-
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-													if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-														$1 = $3 + $5;
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_UNSIGNED_INT:
-												if(typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-													if(typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-														$1 = $3 + $5;
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_STRING:
-												if(typename($3) == TYPENAME_STRING || typename($3) == TYPENAME_CONST_STRING){
-													if(typename($5) == TYPENAME_STRING || typename($5) == TYPENAME_CONST_STRING){
-														$1 = $3;
-														strcat($1, $5);
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-											case TYPENAME_CONST_STRING:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-										} */
 
 										if(!strcmp(symbolType($1), NAME_INT)){
 											if(!strcmp(symbolType($3), NAME_INT)){
@@ -534,41 +492,6 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											exit(0);
 										}
 
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-													$1 = $3 + $5;
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_UNSIGNED_INT:
-												if(typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-													$1 = $3 + $5;
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_STRING:
-												perror("You can't add a number to a string\n");
-												exit(0);
-
-												break; // Unnecesary, but here it is :)
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-											case TYPENAME_CONST_STRING:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-										} */
-
 										if(!strcmp(symbolType($1), NAME_INT)){
 											if(!strcmp(symbolType($3), NAME_INT)){
 												updateSymbolValInt($1, symbolValInt($3) + $5);
@@ -597,41 +520,6 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											exit(0);
 										}
 
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-												if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-													$1 = $3 + $5;
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_UNSIGNED_INT:
-												if(typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-													$1 = $3 + $5;
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_STRING:
-												perror("You can't add a number to a string\n");
-												exit(0);
-
-												break; // Unnecesary, but here it is :)
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-											case TYPENAME_CONST_STRING:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-										} */
-
 										if(!strcmp(symbolType($1), NAME_INT)){
 											if(!strcmp(symbolType($5), NAME_INT)){
 													updateSymbolValInt($1, $3 + symbolValInt($5));
@@ -651,25 +539,6 @@ ST_PLUS: ID S_EQUAL ID S_ADD ID		{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-											case TYPENAME_UNSIGNED_INT:
-												$1 = $3 + $5;
-												break;
-											case TYPENAME_STRING:
-												perror("You can't add a number to a string\n");
-												exit(0);
-
-												break; // Unnecesary, but here it is :)
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-											case TYPENAME_CONST_STRING:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-										} */
 
 										if(!strcmp(symbolType($1), NAME_INT)){
 											updateSymbolValInt($1, symbolValInt($3) + symbolValInt($5));
@@ -702,53 +571,6 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 												perror("The variable was not initialized\n");
 												exit(0);
 											}
-
-											/* switch(typename($1)){
-												case TYPENAME_INT:
-													if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-														if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-															$1 = $3 - $5;
-														}
-														else{
-															perror("Wrong types\n");
-															exit(0);
-														}
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-
-													break;
-												case TYPENAME_UNSIGNED_INT:
-													if(typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-														if(typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-															$1 = $3 - $5;
-														}
-														else{
-															perror("Wrong types\n");
-															exit(0);
-														}
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-
-													break;
-												case TYPENAME_STRING:
-													perror("You can't substract one string from another\n");
-													exit(0);
-
-													break;
-												case TYPENAME_CONST_INT:
-												case TYPENAME_CONST_UNSIGNED_INT:
-												case TYPENAME_CONST_STRING:
-													perror("You can't change the value of a constant!\n");
-													exit(0);
-
-													break;	// Unnecesary, but here it is :)
-											} */
 
 											if(!strcmp(symbolType($1), NAME_INT)){
 												if(!strcmp(symbolType($3), NAME_INT)){
@@ -784,41 +606,6 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 												exit(0);
 											}
 
-											/* switch(typename($1)){
-												case TYPENAME_INT:
-													if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-														$1 = $3 - $5;
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-
-													break;
-												case TYPENAME_UNSIGNED_INT:
-													if(typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-														$1 = $3 - $5;
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-
-													break;
-												case TYPENAME_STRING:
-													perror("You can't substract one string from another\n");
-													exit(0);
-
-													break; // Unnecesary, but here it is :)
-												case TYPENAME_CONST_INT:
-												case TYPENAME_CONST_UNSIGNED_INT:
-												case TYPENAME_CONST_STRING:
-													perror("You can't change the value of a constant!\n");
-													exit(0);
-
-													break;	// Unnecesary, but here it is :)
-											} */
-
 											if(!strcmp(symbolType($1), NAME_INT)){
 												if(!strcmp(symbolType($3), NAME_INT)){
 													updateSymbolValInt($1, symbolValInt($3) - $5);
@@ -847,41 +634,6 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 												exit(0);
 											}
 
-											/* switch(typename($1)){
-												case TYPENAME_INT:
-													if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-														$1 = $3 - $5;
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-
-													break;
-												case TYPENAME_UNSIGNED_INT:
-													if(typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-														$1 = $3 - $5;
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-
-													break;
-												case TYPENAME_STRING:
-													perror("You can't substract one string from another\n");
-													exit(0);
-
-													break; // Unnecesary, but here it is :)
-												case TYPENAME_CONST_INT:
-												case TYPENAME_CONST_UNSIGNED_INT:
-												case TYPENAME_CONST_STRING:
-													perror("You can't change the value of a constant!\n");
-													exit(0);
-
-													break;	// Unnecesary, but here it is :)
-											} */
-
 											if(!strcmp(symbolType($1), NAME_INT)){
 												if(!strcmp(symbolType($5), NAME_INT)){
 													updateSymbolValInt($1, $3 - symbolValInt($5));
@@ -901,26 +653,6 @@ ST_SUBSTRACTION: ID S_EQUAL ID S_SUB ID	{
 												perror("The variable was not declared\n");
 												exit(0);
 											}
-
-											/* switch(typename($1)){
-												case TYPENAME_INT:
-												case TYPENAME_UNSIGNED_INT:
-													$1 = $3 - $5;
-
-													break;
-												case TYPENAME_STRING:
-													perror("You can't substract one string from another\n");
-													exit(0);
-
-													break; // Unnecesary, but here it is :)
-												case TYPENAME_CONST_INT:
-												case TYPENAME_CONST_UNSIGNED_INT:
-												case TYPENAME_CONST_STRING:
-													perror("You can't change the value of a constant!\n");
-													exit(0);
-
-													break;	// Unnecesary, but here it is :)
-											} */
 
 											if(!strcmp(symbolType($1), NAME_INT)){
 													updateSymbolValInt($1, $3 - $5);
@@ -953,53 +685,6 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 														perror("The variable was not initialized\n");
 														exit(0);
 													}
-
-													/* switch(typename($1)){
-														case TYPENAME_INT:
-															if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-																if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-																	$1 = $3 * $5;
-																}
-																else{
-																	perror("Wrong types\n");
-																	exit(0);
-																}
-															}
-															else{
-																perror("Wrong types\n");
-																exit(0);
-															}
-
-															break;
-														case TYPENAME_UNSIGNED_INT:
-															if(typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-																if(typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-																	$1 = $3 * $5;
-																}
-																else{
-																	perror("Wrong types\n");
-																	exit(0);
-																}
-															}
-															else{
-																perror("Wrong types\n");
-																exit(0);
-															}
-
-															break;
-														case TYPENAME_STRING:
-															perror("You can't multiply one string with another\n");
-															exit(0);
-
-															break;
-														case TYPENAME_CONST_INT:
-														case TYPENAME_CONST_UNSIGNED_INT:
-														case TYPENAME_CONST_STRING:
-															perror("You can't change the value of a constant!\n");
-															exit(0);
-
-															break;	// Unnecesary, but here it is :)
-													} */
 
 													if(!strcmp(symbolType($1), NAME_INT)){
 														if(!strcmp(symbolType($3), NAME_INT)){
@@ -1035,41 +720,6 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 														exit(0);
 													}
 
-													/* switch(typename($1)){
-														case TYPENAME_INT:
-															if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-																$1 = $3 * $5;
-															}
-															else{
-																perror("Wrong types\n");
-																exit(0);
-															}
-
-															break;
-														case TYPENAME_UNSIGNED_INT:
-															if(typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-																$1 = $3 * $5;
-															}
-															else{
-																perror("Wrong types\n");
-																exit(0);
-															}
-
-															break;
-														case TYPENAME_STRING:
-															perror("You can't multiply one string with another\n");
-															exit(0);
-
-															break; // Unnecesary, but here it is :)
-														case TYPENAME_CONST_INT:
-														case TYPENAME_CONST_UNSIGNED_INT:
-														case TYPENAME_CONST_STRING:
-															perror("You can't change the value of a constant!\n");
-															exit(0);
-
-															break;	// Unnecesary, but here it is :)
-													} */
-
 													if(!strcmp(symbolType($1), NAME_INT)){
 														if(!strcmp(symbolType($3), NAME_INT)){
 															updateSymbolValInt($1, symbolValInt($3) * $5);
@@ -1098,41 +748,6 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 														exit(0);
 													}
 
-													/* switch(typename($1)){
-														case TYPENAME_INT:
-															if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-																$1 = $3 * $5;
-															}
-															else{
-																perror("Wrong types\n");
-																exit(0);
-															}
-
-															break;
-														case TYPENAME_UNSIGNED_INT:
-															if(typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-																$1 = $3 * $5;
-															}
-															else{
-																perror("Wrong types\n");
-																exit(0);
-															}
-
-															break;
-														case TYPENAME_STRING:
-															perror("You can't multiply one string with another\n");
-															exit(0);
-
-															break; // Unnecesary, but here it is :)
-														case TYPENAME_CONST_INT:
-														case TYPENAME_CONST_UNSIGNED_INT:
-														case TYPENAME_CONST_STRING:
-															perror("You can't change the value of a constant!\n");
-															exit(0);
-
-															break;	// Unnecesary, but here it is :)
-													} */
-
 													if(!strcmp(symbolType($1), NAME_INT)){
 														if(!strcmp(symbolType($5), NAME_INT)){
 															updateSymbolValInt($1, $3 * symbolValInt($5));
@@ -1152,26 +767,6 @@ ST_MULTIPLICATION: ID S_EQUAL ID S_ASTERISK ID	{
 														perror("The variable was not declared\n");
 														exit(0);
 													}
-
-													/* switch(typename($1)){
-														case TYPENAME_INT:
-														case TYPENAME_UNSIGNED_INT:
-															$1 = $3 * $5;
-
-															break;
-														case TYPENAME_STRING:
-															perror("You can't multiply one string with another\n");
-															exit(0);
-
-															break; // Unnecesary, but here it is :)
-														case TYPENAME_CONST_INT:
-														case TYPENAME_CONST_UNSIGNED_INT:
-														case TYPENAME_CONST_STRING:
-															perror("You can't change the value of a constant!\n");
-															exit(0);
-
-															break;	// Unnecesary, but here it is :)
-													} */
 
 													if(!strcmp(symbolType($1), NAME_INT)){
 														updateSymbolValInt($1, $3 * $5);
@@ -1204,53 +799,6 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
-
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-													if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-														$1 = $3 / $5;
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_UNSIGNED_INT:
-												if(typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-													if(typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-														$1 = $3 / $5;
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_STRING:
-												perror("You can't divide one string with another\n");
-												exit(0);
-
-												break;
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-											case TYPENAME_CONST_STRING:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-										} */
 
 										if(!strcmp(symbolType($1), NAME_INT)){
 											if(!strcmp(symbolType($3), NAME_INT)){
@@ -1286,41 +834,6 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 											exit(0);
 										}
 
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-													$1 = $3 / $5;
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_UNSIGNED_INT:
-												if(typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-													$1 = $3 / $5;
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_STRING:
-												perror("You can't divide one string with another\n");
-												exit(0);
-
-												break; // Unnecesary, but here it is :)
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-											case TYPENAME_CONST_STRING:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-										} */
-
 										if(!strcmp(symbolType($1), NAME_INT)){
 											if(!strcmp(symbolType($3), NAME_INT)){
 												updateSymbolValInt($1, symbolValInt($3) / $5);
@@ -1349,41 +862,6 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 											exit(0);
 										}
 
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-												if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-													$1 = $3 / $5;
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_UNSIGNED_INT:
-												if(typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-													$1 = $3 / $5;
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_STRING:
-												perror("You can't divide one string with another\n");
-												exit(0);
-
-												break; // Unnecesary, but here it is :)
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-											case TYPENAME_CONST_STRING:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-										} */
-
 										if(!strcmp(symbolType($1), NAME_INT)){
 											if(!strcmp(symbolType($5), NAME_INT)){
 												updateSymbolValInt($1, $3 / symbolValInt($5));
@@ -1403,26 +881,6 @@ ST_DIVISION: ID S_EQUAL ID S_DIV ID	{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-											case TYPENAME_UNSIGNED_INT:
-												$1 = $3 / $5;
-
-												break;
-											case TYPENAME_STRING:
-												perror("You can't divide one string with another\n");
-												exit(0);
-
-												break; // Unnecesary, but here it is :)
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-											case TYPENAME_CONST_STRING:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-										} */
 
 										if(!strcmp(symbolType($1), NAME_INT)){
 											updateSymbolValInt($1, $3 / $5);
@@ -1455,53 +913,6 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 											perror("The variable was not initialized\n");
 											exit(0);
 										}
-
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-													if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-														$1 = $3 % $5;
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_UNSIGNED_INT:
-												if(typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-													if(typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-														$1 = $3 % $5;
-													}
-													else{
-														perror("Wrong types\n");
-														exit(0);
-													}
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_STRING:
-												perror("You can't do the module to a string\n");
-												exit(0);
-
-												break;
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-											case TYPENAME_CONST_STRING:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-										} */
 
 										if(!strcmp(symbolType($1), NAME_INT)){
 											if(!strcmp(symbolType($3), NAME_INT)){
@@ -1537,42 +948,6 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 											exit(0);
 										}
 
-
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-												if(typename($3) == TYPENAME_INT || typename($3) == TYPENAME_CONST_INT || typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-													$1 = $3 % $5;
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_UNSIGNED_INT:
-												if(typename($3) == TYPENAME_UNSIGNED_INT || typename($3) == TYPENAME_CONST_UNSIGNED_INT){
-													$1 = $3 % $5;
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_STRING:
-												perror("You can't do the module to a string\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-											case TYPENAME_CONST_STRING:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-										} */
-
 										if(!strcmp(symbolType($1), NAME_INT)){
 											if(!strcmp(symbolType($3), NAME_INT)){
 												updateSymbolValInt($1, symbolValInt($3) % $5);
@@ -1601,41 +976,6 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 											exit(0);
 										}
 
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-												if(typename($5) == TYPENAME_INT || typename($5) == TYPENAME_CONST_INT || typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-													$1 = $3 % $5;
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_UNSIGNED_INT:
-												if(typename($5) == TYPENAME_UNSIGNED_INT || typename($5) == TYPENAME_CONST_UNSIGNED_INT){
-													$1 = $3 % $5;
-												}
-												else{
-													perror("Wrong types\n");
-													exit(0);
-												}
-
-												break;
-											case TYPENAME_STRING:
-												perror("You can't do the module to a string\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-											case TYPENAME_CONST_STRING:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-										} */
-
 										if(!strcmp(symbolType($1), NAME_INT)){
 											if(!strcmp(symbolType($5), NAME_INT)){
 												updateSymbolValInt($1, $3 % symbolValInt($5));
@@ -1655,26 +995,6 @@ ST_MODULE: ID S_EQUAL ID S_MOD ID	{
 											perror("The variable was not declared\n");
 											exit(0);
 										}
-
-										/* switch(typename($1)){
-											case TYPENAME_INT:
-											case TYPENAME_UNSIGNED_INT:
-												$1 = $3 % $5;
-
-												break;
-											case TYPENAME_STRING:
-												perror("You can't do the module to a string\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-											case TYPENAME_CONST_INT:
-											case TYPENAME_CONST_UNSIGNED_INT:
-											case TYPENAME_CONST_STRING:
-												perror("You can't change the value of a constant!\n");
-												exit(0);
-
-												break;	// Unnecesary, but here it is :)
-										} */
 
 										if(!strcmp(symbolType($1), NAME_INT)){
 													updateSymbolValInt($1, $3 % $5);
@@ -1802,15 +1122,15 @@ ST_NOT: ID CS_NOT ID		{
 	| ID CS_NOT OP_BINARY	{return symbolValInt($1) != $3;}
 	;
 
-ST_IF: CS_IF O_BRACKETS CONDITION C_BRACKETS CS_THEN ST1 SEMICOLON CS_ELSE ST1 SEMICOLON
-	| CS_IF O_BRACKETS CONDITION C_BRACKETS CS_THEN ST1 SEMICOLON
+ST_IF: CS_IF O_BRACKETS CONDITION C_BRACKETS CS_THEN ST1 SEMICOLON CS_ELSE ST1 SEMICOLON	{printf("if detectado\n");}
+	| CS_IF O_BRACKETS CONDITION C_BRACKETS CS_THEN ST1			{printf("if detectado\n");}
 	;
 
 ST_WHILE: CS_WHILE O_BRACKETS CONDITION C_BRACKETS O_CURLY ST1 C_CURLY;
 
-ST_FOR: CS_FOR O_BRACKETS ID S_EQUAL NUM SEMICOLON CONDITION SEMICOLON ID S_INCREMENTO C_BRACKETS O_CURLY ST1 C_CURLY
-	| CS_FOR O_BRACKETS ID S_EQUAL NUM SEMICOLON CONDITION SEMICOLON ID S_DECREMENTO C_BRACKETS O_CURLY ST1 C_CURLY
-	| CS_FOR O_BRACKETS ID S_EQUAL NUM SEMICOLON CONDITION SEMICOLON ID OPERATION ID_NUM C_BRACKETS O_CURLY ST1 C_CURLY
+ST_FOR: CS_FOR O_BRACKETS ID S_EQUAL NUM SEMICOLON CONDITION SEMICOLON ID S_INCREMENTO C_BRACKETS O_CURLY ST1 C_CURLY		{printf("for detectado\n");}
+	| CS_FOR O_BRACKETS ID S_EQUAL NUM SEMICOLON CONDITION SEMICOLON ID S_DECREMENTO C_BRACKETS O_CURLY ST1 C_CURLY		{printf("for detectado\n");}
+	| CS_FOR O_BRACKETS ID S_EQUAL NUM SEMICOLON CONDITION SEMICOLON ID OPERATION ID_NUM C_BRACKETS O_CURLY ST1 C_CURLY		{printf("for detectado\n");}
 	;
 
 ST1: ST_IF
@@ -2104,21 +1424,6 @@ STRING_OP: ID S_EQUAL STRING SEMICOLON			{
 														exit(0);
 													}
 
-													/* switch(typename($1)){
-														case TYPENAME_STRING:
-															$1 = $3;
-
-															break;
-														case TYPENAME_CONST_STRING:
-															perror("You can't change the value of a constant!\n");
-															exit(0);
-
-															break;
-														default:
-															perror("You can't assign a string to this type of data\n");
-															exit(0);
-													} */
-
 													if(!strcmp(symbolType($1), NAME_STRING)){
 														updateSymbolValString($1, $3);
 													}
@@ -2132,22 +1437,6 @@ STRING_OP: ID S_EQUAL STRING SEMICOLON			{
 														perror("The variable was not declared\n");
 														exit(0);
 													}
-
-													/* switch(typename($1)){
-														case TYPENAME_STRING:
-															$1 = $3;
-															strcat($1, $5);
-
-															break;
-														case TYPENAME_CONST_STRING:
-															perror("You can't change the value of a constant!\n");
-															exit(0);
-
-															break;
-														default:
-															perror("You can't assign a string to this type of data\n");
-															exit(0);
-													} */
 
 													if(!strcmp(symbolType($1), NAME_STRING)){
 														updateSymbolValString($1, strcat($3, $5));
@@ -2168,28 +1457,6 @@ STRING_OP: ID S_EQUAL STRING SEMICOLON			{
 														exit(0);
 													}
 
-													/* switch(typename($1)){
-														case TYPENAME_STRING:
-															if(typename($3) == TYPENAME_STRING || typename($3) == TYPENAME_CONST_STRING){
-																$1 = $3;
-																strcat($1, $5);
-															}
-															else{
-																perror("There has been a problem with variables, revise the types\n");
-																exit(0);
-															}
-
-															break;
-														case TYPENAME_CONST_STRING:
-															perror("You can't change the value of a constant!\n");
-															exit(0);
-
-															break;
-														default:
-															perror("You can't assign a string to this type of data\n");
-															exit(0);
-													} */
-
 													if(!strcmp(symbolType($1), NAME_STRING)){
 														updateSymbolValString($1, strcat(symbolValString($3), $5));
 													}
@@ -2209,28 +1476,6 @@ STRING_OP: ID S_EQUAL STRING SEMICOLON			{
 														exit(0);
 													}
 
-													/* switch(typename($1)){
-														case TYPENAME_STRING:
-															if(typename($5) == TYPENAME_STRING || typename($5) == TYPENAME_CONST_STRING){
-																$1 = $3;
-																strcat($1, $5);
-															}
-															else{
-																perror("There has been a problem with variables, revise the types\n");
-																exit(0);
-															}
-
-															break;
-														case TYPENAME_CONST_STRING:
-															perror("You can't change the value of a constant!\n");
-															exit(0);
-
-															break;
-														default:
-															perror("You can't assign a string to this type of data\n");
-															exit(0);
-													} */
-
 													if(!strcmp(symbolType($1), NAME_STRING)){
 														updateSymbolValString($1, strcat($3, symbolValString($5)));
 													}
@@ -2243,8 +1488,8 @@ STRING_OP: ID S_EQUAL STRING SEMICOLON			{
 
 USER_DEF: S_STRUCT ID O_CURLY DATA C_CURLY;
 
-DATA: VARIABLE SEMICOLON DATA
-	| VARIABLE SEMICOLON
+DATA: VARIABLE DATA
+	| VARIABLE
 	;
 
 ID_NUM: ID
@@ -2257,7 +1502,6 @@ int main(int argc, char* argv[]){
 	int i;
 
 	for(i = 0; i < MAX_NUM_FUNCS; i++){
-		//strcpy(vars[i], &HASH);
 		strcpy(funcs[i], &HASH);
 	}
 
