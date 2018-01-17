@@ -77,11 +77,12 @@
 	}
 
 	void checkFunctionSignature(char *name){
-		char hash = '#';
+		const char hash = '#';
 
 		for(int i = 0; i < MAX_NUM_FUNCS; i++){
 			if(!strcmp(name, funcs[i])){	// This means they have the same name
 				perror("This function was already declared\n");
+				exit(0);
 			}
 
 			if(!strcmp(&hash, funcs[i])){
@@ -161,13 +162,8 @@
 	}
 %}
 
+// Data types
 %union {int num; char id; char *string; int bool;}
-%type <bool>CONDITION
-%type <bool>ST_AND
-%type <bool>ST_OR
-%type <bool>ST_NOT
-%type <bool>OP_BINARY
-%type <string>SIGNATURE
 
 // Characters
 %token O_BRACKETS	C_BRACKETS
@@ -184,7 +180,6 @@
 %token S_ASTERISK
 %token S_INCREMENTO		S_DECREMENTO
 %token OPERATION
-
 
 // Types and functions
 %token <num>S_INTEGER
@@ -208,6 +203,22 @@
 
 // Print function
 %token S_PRINT
+
+// Types
+%type <bool>CONDITION
+%type <bool>ST_AND
+%type <bool>ST_OR
+%type <bool>ST_NOT
+%type <bool>OP_BINARY
+%type <string>SIGNATURE
+
+// Types
+%type <bool>CONDITION
+%type <bool>ST_AND
+%type <bool>ST_OR
+%type <bool>ST_NOT
+%type <bool>OP_BINARY
+%type <string>SIGNATURE
 
 // Others
 %token <num>NUM
@@ -253,7 +264,12 @@ FUNCION_PRINCIPAL: S_PRINCIPAL O_CURLY EXPRESIONS C_CURLY
 	| S_PRINCIPAL O_BRACKETS S_ARGUMENTS C_BRACKETS O_CURLY EXPRESIONS C_CURLY
 	;
 
-FUNCION: S_DEFFUNCTION SIGNATURE O_CURLY EXPRESIONS C_CURLY		{checkFunctionSignature($2);};
+FUNCION: S_DEFFUNCTION SIGNATURE O_CURLY EXPRESIONS C_CURLY		{
+																	checkFunctionSignature($2);
+
+																	
+																}
+	;
 
 SIGNATURE: FUNC_NAME O_BRACKETS C_BRACKETS
 	| FUNC_NAME O_BRACKETS PARAMETERS C_BRACKETS
@@ -1308,14 +1324,14 @@ ST_NOT: ID CS_NOT ID		{
 	| ID CS_NOT OP_BINARY	{$$ = symbolValInt($1) != $3;}
 	;
 
-ST_IF: CS_IF O_BRACKETS CONDITION C_BRACKETS CS_THEN O_CURLY ST1 C_CURLY SEMICOLON CS_ELSE O_CURLY ST1 C_CURLY	{printf("if detectado\n");}
-	| CS_IF O_BRACKETS CONDITION C_BRACKETS CS_THEN O_CURLY ST1 C_CURLY					{printf("if detectado\n");}
+ST_IF: CS_IF O_BRACKETS CONDITION C_BRACKETS CS_THEN O_CURLY ST1 C_CURLY SEMICOLON CS_ELSE O_CURLY ST1 C_CURLY	{printf("if detected\n");}
+	| CS_IF O_BRACKETS CONDITION C_BRACKETS CS_THEN O_CURLY ST1 C_CURLY											{printf("if detected\n");}
 	;
 
 ST_WHILE: CS_WHILE O_BRACKETS CONDITION C_BRACKETS O_CURLY ST1 C_CURLY SEMICOLON	{printf("While loop detected\n");}
 	;
 
-ST_FOR: CS_FOR O_BRACKETS ID S_EQUAL NUM SEMICOLON CONDITION SEMICOLON OPERATIONS C_BRACKETS O_CURLY ST1 C_CURLY SEMICOLON	{printf("for detectado\n");}
+ST_FOR: CS_FOR O_BRACKETS ID S_EQUAL NUM SEMICOLON CONDITION SEMICOLON OPERATIONS C_BRACKETS O_CURLY ST1 C_CURLY SEMICOLON	{printf("for loop detected\n");}
 	;
 
 ST1: ST_IF
@@ -1344,19 +1360,9 @@ CONDITION: ID CS_EQUAL ID			{
 											exit(0);
 										}
 
-										if(!variable_is_defined($3)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
 										$$ = symbolValInt($1) == $3;
 									}
 	| NUM CS_EQUAL ID				{
-										if(!variable_is_defined($1)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
 										if(!variable_is_defined($3)){
 											perror("The variable was not declared\n");
 											exit(0);
@@ -1384,19 +1390,9 @@ CONDITION: ID CS_EQUAL ID			{
 											exit(0);
 										}
 
-										if(!variable_is_defined($3)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
 										$$ = symbolValInt($1) > $3;
 									}
 	| NUM CS_GREATER ID				{
-										if(!variable_is_defined($1)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
 										if(!variable_is_defined($3)){
 											perror("The variable was not declared\n");
 											exit(0);
@@ -1424,19 +1420,9 @@ CONDITION: ID CS_EQUAL ID			{
 											exit(0);
 										}
 
-										if(!variable_is_defined($3)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
 										$$ = symbolValInt($1) < $3;
 									}
 	| NUM CS_LESS ID				{
-										if(!variable_is_defined($1)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
 										if(!variable_is_defined($3)){
 											perror("The variable was not declared\n");
 											exit(0);
@@ -1464,19 +1450,9 @@ CONDITION: ID CS_EQUAL ID			{
 											exit(0);
 										}
 
-										if(!variable_is_defined($3)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
 										$$ = symbolValInt($1) != $3;
 									}
 	| NUM CS_DIFFERENT ID			{
-										if(!variable_is_defined($1)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
 										if(!variable_is_defined($3)){
 											perror("The variable was not declared\n");
 											exit(0);
@@ -1486,40 +1462,15 @@ CONDITION: ID CS_EQUAL ID			{
 									}
 	| NUM CS_DIFFERENT NUM			{$$ = $1 != $3;}
 	| CONDITION CS_AND CONDITION	{
-										if(!variable_is_defined($1)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
-										if(!variable_is_defined($3)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
 										$$ = $1 && $3;
 									}
 	| CONDITION CS_OR CONDITION		{
-										if(!variable_is_defined($1)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
-										if(!variable_is_defined($3)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
 										$$ = $1 || $3;
 									}
 	| CS_NOT CONDITION				{
-										if(!variable_is_defined($2)){
-											perror("The variable was not declared\n");
-											exit(0);
-										}
-
 										$$ = !$2;
 									}
-	| ID						{
+	| ID							{
 										if(!variable_is_defined($1)){
 											perror("The variable was not declared\n");
 											exit(0);
@@ -1527,7 +1478,7 @@ CONDITION: ID CS_EQUAL ID			{
 
 										$$ = symbolValInt($1);
 									}
-	| NUM						{$$ = $1;}
+	| NUM							{$$ = $1;}
 	;
 
 PRINTING: S_PRINT STRING SEMICOLON	{printf("Printing %s\n", $2);}
@@ -1622,6 +1573,16 @@ STRING_OP: ID S_EQUAL STRING SEMICOLON			{
 													checkVariable($2, false);
 													declareSymbol($2, NAME_STRING);
 
+													if(!variable_is_defined($4)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+
+													if(!variable_is_defined($6)){
+														perror("The variable was not declared\n");
+														exit(0);
+													}
+
 													if(!strcmp(symbolType($2), NAME_STRING)){
 														if(!strcmp(symbolType($4), NAME_STRING)){
 															if(!strcmp(symbolType($6), NAME_STRING)){
@@ -1644,7 +1605,8 @@ STRING_OP: ID S_EQUAL STRING SEMICOLON			{
 												}
 	;
 
-USER_DEF: S_STRUCT ID O_CURLY DATA C_CURLY;
+USER_DEF: S_STRUCT ID O_CURLY DATA C_CURLY	{printf("Struct detected\n");}
+	;
 
 DATA: VARIABLE DATA
 	| VARIABLE
