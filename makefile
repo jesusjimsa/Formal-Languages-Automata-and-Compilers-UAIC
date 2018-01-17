@@ -14,7 +14,7 @@ analyser: $(SRC)/sintactic.l
 compiler: $(SRC)/sintactic.y 
 	$(YACCFLAGS) $(SRC)/sintactic.y -o $(SRC)/y.tab.c
 
-run: language #
+run: language
 	$(BIN)/language
 
 frun: $(BIN)/language
