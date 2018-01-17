@@ -212,14 +212,6 @@
 %type <bool>OP_BINARY
 %type <string>SIGNATURE
 
-// Types
-%type <bool>CONDITION
-%type <bool>ST_AND
-%type <bool>ST_OR
-%type <bool>ST_NOT
-%type <bool>OP_BINARY
-%type <string>SIGNATURE
-
 // Others
 %token <num>NUM
 %token <id>ID
@@ -241,6 +233,7 @@ START: BEGIN
 	| ST_FOR
 	| STRING_OP
 	| CONDITION
+	| CALL_FUNCTIONS
 	| BEGIN START
 	| FUNCION START
 	| DECLARATION_VARIABLES START
@@ -252,6 +245,7 @@ START: BEGIN
 	| ST_FOR START
 	| STRING_OP START
 	| CONDITION START
+	| CALL_FUNCTIONS START
 	;
 
 BEGIN: FUNCIONES;
@@ -267,7 +261,7 @@ FUNCION_PRINCIPAL: S_PRINCIPAL O_CURLY EXPRESIONS C_CURLY
 FUNCION: S_DEFFUNCTION SIGNATURE O_CURLY EXPRESIONS C_CURLY		{
 																	checkFunctionSignature($2);
 
-																	
+																	printf("Function detected\n");
 																}
 	;
 
@@ -284,9 +278,11 @@ PARAMETERS: VAR_TYPE ID
 EXPRESIONS: DECLARATION_VARIABLES
 	| CALL_FUNCTIONS
 	| OPERATIONS
+	| PRINTING
 	| EXPRESIONS OPERATIONS
 	| EXPRESIONS CALL_FUNCTIONS
 	| EXPRESIONS DECLARATION_VARIABLES
+	| EXPRESIONS PRINTING
 	;
 
 DECLARATION_VARIABLES:VARIABLE
@@ -532,34 +528,19 @@ CHAR: S_CHAR
 	| S_CONSTANT_CHAR
 	;
 
-S_DEFINITION: NUM
-	| STRING
-	| BINARY
+CALL_FUNCTIONS: VAR_TYPE ID S_EQUAL FUNCTION_DEFINITION SEMICOLON
+	| ID S_EQUAL FUNCTION_DEFINITION SEMICOLON
+	| FUNCTION_DEFINITION SEMICOLON
 	;
 
-CALL_FUNCTIONS: S_VARIABLE ID S_EQUAL FUNCTION_DEFINITION
-	| ID S_EQUAL FUNCTION_DEFINITION
-	| FUNCTION_DEFINITION
-	;
+FUNCTION_DEFINITION:SIGNATURE	{
+									if(!function_is_defined($1)){
+										perror("The function was not declared\n");
+										exit(0);
+									}
 
-FUNCTION_DEFINITION:FUNC_NAME O_BRACKETS C_BRACKETS  			{
-																	if(!function_is_defined($1)){
-																		perror("The function was not declared\n");
-																		exit(0);
-																	}
-																}
-	| FUNC_NAME O_BRACKETS PARAMETERS_WDECLARATION C_BRACKETS 	{
-																	if(!function_is_defined($1)){
-																		perror("The function was not declared\n");
-																		exit(0);
-																	}
-																}
-	;
-
-PARAMETERS_WDECLARATION: ID S_COMMA PARAMETERS_WDECLARATION
-	| S_DEFINITION S_COMMA PARAMETERS_WDECLARATION
-	| ID
-	| S_DEFINITION
+									printf("Function call detected\n");
+								}
 	;
 
 OPERATIONS: ID S_EQUAL NUM SEMICOLON		{

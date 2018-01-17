@@ -45,7 +45,7 @@ SPACE [ ]*
 "*"				{return S_ASTERISK;}
 "int"			{return S_INTEGER;}
 "char"			{return S_CHAR;}
-"function"		{return S_DEFFUNCTION;}
+"function "		{return S_DEFFUNCTION;}
 "principal"		{return S_PRINCIPAL;}
 "const int"		{return S_CONSTANT_INT;}
 "const char"	{return S_CONSTANT_CHAR;}
